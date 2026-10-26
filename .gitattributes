@@ -1,0 +1,3 @@
+# The CSVs use CRLF line endings (the Python csv default) and CI byte-diffs them against a fresh
+# analyze, so git must never convert their line endings.
+*.csv -text

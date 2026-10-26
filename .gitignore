@@ -1,0 +1,18 @@
+# virtual environments (one per part, plus the old-SDK venv used by check_error_strings.py)
+.venv/
+.venv-*/
+# API keys: keep them in your environment or a .env file, never in git
+.env
+.env.*
+# node
+node_modules/
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+# scratch output
+*.out
+.DS_Store
+# run folders the README commands create (smoke/, hosted-check/, full/), but keep the committed sweep
+part1-loop-and-readback/experiment/*/
+!part1-loop-and-readback/experiment/sweep/
