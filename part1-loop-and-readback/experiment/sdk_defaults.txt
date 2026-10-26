@@ -1,0 +1,101 @@
+openai-agents defaults, read from the installed source
+installed: openai-agents 0.24.0 (from requirements.lock.txt)
+for comparison: openai-agents 0.22.3 in a second venv (from
+requirements-0.22.3.lock.txt), used only by check_error_strings.py
+Paths below are relative to each venv's site-packages folder.
+
+1. Default tool error string
+   agents/tool.py, line 1997:
+
+def default_tool_error_function(ctx: RunContextWrapper[Any], error: Exception) -> str:
+    """Return a fixed error response without exposing the exception to the model.
+
+    Provide a custom ``failure_error_function`` to return application-approved error details.
+    """
+    return "An error occurred while running the tool. Please try again."
+
+   What the model reads for any exception a function tool raises when no
+   failure_error_function is passed (checked by calling it on this experiment's errors):
+   "An error occurred while running the tool. Please try again."
+
+2. Default max_turns
+   DEFAULT_MAX_TURNS = 10   (agents/run_config.py, line 45)
+   Runner.run uses it when max_turns is not passed. A turn is one model call, so a run is at
+   most 10 model calls before MaxTurnsExceeded.
+   Choice: kept at the SDK default. It bounds a run at 10 model calls, so a run that never
+   succeeds still ends. The script never passes max_turns.
+
+3. The change, read from the real 0.22.3 install
+   agents/tool.py, line 1966:
+
+def default_tool_error_function(ctx: RunContextWrapper[Any], error: Exception) -> str:
+    """The default tool error function, which just returns a generic error message."""
+    json_decode_error = _extract_tool_argument_json_error(error)
+    if json_decode_error is not None:
+        return (
+            "An error occurred while parsing tool arguments. "
+            "Please try again with valid JSON. "
+            f"Error: {json_decode_error}"
+        )
+    return f"An error occurred while running the tool. Please try again. Error: {str(error)}"
+
+   0.22.3 was uploaded 2026-09-17 and 0.23.1 on 2026-10-02. No 0.23.0 exists on PyPI, so
+   0.22.3 -> 0.23.1 is the step. DEFAULT_MAX_TURNS was 10 in both.
+   What each version returns for this experiment's errors (check_error_strings.py):
+   [priority_422]
+     0.24.0: An error occurred while running the tool. Please try again.
+     0.22.3: An error occurred while running the tool. Please try again. Error: 422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be 'P0', 'P1' or 'P2'", "input": "high", "ctx": {"expected": "'P0', 'P1' or 'P2'"}}]}
+   [phone_422]
+     0.24.0: An error occurred while running the tool. Please try again.
+     0.22.3: An error occurred while running the tool. Please try again. Error: 422 Unprocessable Entity: {"detail": [{"type": "string_pattern_mismatch", "loc": ["body", "to"], "msg": "String should match pattern '^\\+[1-9]\\d{1,14}$'", "input": "(415) 555-0132", "ctx": {"pattern": "^\\+[1-9]\\d{1,14}$"}}]}
+   [bad_json_sdk]
+     0.24.0: An error occurred while running the tool. Please try again.
+     0.22.3: An error occurred while running the tool. Please try again. Error: Invalid JSON input for tool send_sms
+
+   The "old_default" arm copies the 0.22.3 function body into a failure_error_function run
+   under 0.24.0. Compared with the real 0.22.3 on the same errors: MATCH on 5 of 5 errors (both 422s, bad JSON as the SDK raises it, bad JSON with the decode error attached, a plain RuntimeError).
+   It is the old string reproduced in the current SDK, so the arms differ only in this string.
+
+   Caveat: the servers here raise an error whose str() holds the whole 422 body, the way SDK
+   clients such as Twilio's or Stripe's carry the server's message. That is the generous case
+   for the old default. A tool that calls httpx or requests raise_for_status() raises an
+   error whose str() holds only the status line and the URL, so the old default would have
+   shown no allowed values. The old_default arm does not show that the old default always
+   told the model the allowed values.
+
+4. Other SDK defaults this experiment runs on
+   - Agent(model="<name>") with no model_settings: for any name outside the SDK's gpt-5*
+     patterns (gpt-6-astra and gpt-6.1-sol included) the agent gets ModelSettings(), so no
+     temperature, reasoning effort or seed is sent and the API's own defaults apply
+     (agents/models/default_models.py, get_default_model_settings). In the sweep, under these
+     settings, gpt-6-astra reported reasoning tokens on 10 of its 370 calls (150 tokens in
+     all) and gpt-6.1-sol on 9 of its 377 calls (136 tokens in all).
+   - A model given by name goes through the Responses API (_use_responses_by_default = True).
+     The Responses API takes no seed, so hosted arms are unpaired (Fisher exact).
+   - The SDK's default model when none is given: gpt-5.6-luna (OPENAI_DEFAULT_MODEL overrides).
+   - Tracing is on by default and uploads traces to OpenAI. This script turns it off with
+     RunConfig(tracing_disabled=True). It does not change what the model sees.
+   - run_config.tool_error_formatter is None by default, so nothing rewrites the fixed line.
+   - OPENAI_AGENTS_DONT_LOG_TOOL_DATA defaults to on, so the SDK raises bad tool-argument JSON
+     without the decode error attached. Both versions then use their generic line for it.
+
+5. Local backend (Ollama 0.33.3, OpenAI-compatible /v1 endpoint)
+   OpenAIChatCompletionsModel with ModelSettings(temperature=0.7, max_tokens=800,
+   reasoning=Reasoning(effort="none"), extra_args={"seed": seed}). reasoning_effort="none"
+   turns qwen3.5 thinking off. An extra_body "think": false is ignored on /v1 (probed
+   2026-10-26: the reply still carried a reasoning field).
+
+6. What this script adds on top of the SDK (not defaults, so state them with any result)
+   - The system prompt, shared by every arm:
+     "You are an operations assistant. Use the {tool} tool to complete the user's request. If a tool call returns an error, read it, correct the call, and try again."
+     Its last sentence is this script's, not the SDK's. In the default arm it adds to the
+     SDK's own "Please try again", which can stretch retry loops. Every arm shares it, so the
+     comparison holds, but a reader should not think the prompt alone caused the loops.
+   - The approved notes (the "note" arm), verbatim:
+     priority: "priority is not valid. Allowed values: P0 (critical), P1 (high), P2 (normal). Next step: call create_ticket again with priority set to one of these codes."
+     to: "to is not valid. Use E.164 format: a plus sign, then the country code, then the rest of the number, digits only, with no spaces, dashes or brackets. Example: +442079460123. Next step: call send_sms again with to written in this format."
+     message: "message is empty. Next step: call send_sms again with the text to send in message."
+   - Statistics: one test per comparison (note vs default, old_default vs default) per model
+     and task, on overall success and on fixes after a failed first call. The full sweep makes
+     6 models x 2 tasks x 2 comparisons x 2 tests = 48 p-values. Each row of tests.csv carries
+     Holm-adjusted values across all 48, so one p<0.05 cell is not read as a finding.
