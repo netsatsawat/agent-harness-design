@@ -15,8 +15,8 @@ codes and their meaning, the same model created the ticket with P1 in 20 of 20 r
 OpenAI had a fair reason for the change. The fixed line keeps the raw exception, and anything
 private in it, out of the model's context. But the team that built the agent never chose it.
 
-**Goal.** A way to design job 1 of the harness, the loop and what the model reads back, that
-works with any model.
+**Goal.** A way to design the first part of the harness, the loop and what the model reads back,
+that works with any model.
 
 **Takeaway.** Trust comes from the harness you design, not from the model or your framework's
 defaults.
@@ -61,10 +61,10 @@ each SDK version, with what each one returns for the errors in this experiment.
 
 ## A harness design review
 
-The series splits the work around the model into eight jobs. Each job gets one pattern and one
+The series splits the work around the model into eight parts. Each part gets one pattern and one
 anti-pattern, the thing teams or framework defaults often do instead. The checks work with any
 model, because each one makes a failure happen on purpose and reads the trace, the log of every
-model and tool call in a run. Every job follows one rule: the model chooses what to try, code
+model and tool call in a run. Every part follows one rule: the model chooses what to try, code
 enforces the limits and rules, and your team decides what proves it works.
 
 1. **Loop and read-back** (this part). Pattern: code writes what the model reads and decides when to stop. Anti-pattern: run on framework defaults nobody read.
@@ -73,18 +73,18 @@ enforces the limits and rules, and your team decides what proves it works.
 4. **Sub-agents and handoffs** (Part 4). Pattern: define what a sub-agent's answer must carry back. Anti-pattern: accept a free-form summary that drops a rule.
 5. **Recovery** (Part 5). Pattern: put an idempotency key on every tool that changes data. Anti-pattern: retry or resume a write without one.
 6. **Authority** (Part 6). Pattern: enforce rules in the tool or an approval step. Anti-pattern: a rule only in the prompt, with approval off, which is the OpenAI SDK's [default](https://github.com/openai/openai-agents-python/blob/v0.24.0/src/agents/tool.py#L500-L502).
-7. **Evidence before release** (Part 7, team job). Pattern: run each change many times and grade the outcome against the user's request. Anti-pattern: ship on one good run.
-8. **Ownership after launch** (Part 8, team job). Pattern: name who reads traces and who removes parts a newer model no longer needs. Anti-pattern: keep every workaround, like the context resets Anthropic built for Sonnet 4.5 that became "[dead weight](https://claude.com/resources/articles/harnessing-claudes-intelligence)" on Opus 4.5.
+7. **Evidence before release** (Part 7, team work). Pattern: run each change many times and grade the outcome against the user's request. Anti-pattern: ship on one good run.
+8. **Ownership after launch** (Part 8, team work). Pattern: name who reads traces and who removes parts a newer model no longer needs. Anti-pattern: keep every workaround, like the context resets Anthropic built for Sonnet 4.5 that became "[dead weight](https://claude.com/resources/articles/harnessing-claudes-intelligence)" on Opus 4.5.
 
-![The design review on one page: one row per job, with the question it answers, the pattern to build and the anti-pattern to look for. Row 1, loop and read-back, is this part.](figures/design-review.png)
+![The design review on one page, for any model or framework: one row per part, with the question it answers, the pattern to build and the anti-pattern to look for. Row 1, loop and read-back, is this part. Rows 7 and 8 are team work, outside the harness.](figures/design-review.png)
 
-*The design review on one page. Each row is one job, with the question it answers, the pattern
+*The design review on one page. Each row is one part, with the question it answers, the pattern
 to build and the anti-pattern to look for in your traces.*
 
 The figure script checks its wording against the list above, so the two cannot drift apart (see
 [Figures](#figures)).
 
-## Six patterns for job 1
+## Six patterns for the loop and read-back
 
 Each pattern has one example module in `examples/` and one test file in `examples/tests/`.
 
@@ -175,7 +175,7 @@ each error message on every model you run, and grade the value the tool stored.
 
 **Anti-pattern: reporting success because the tool accepted the call.** Teams often count a run
 as done when the tool returns success, but a validator checks only the form of a value. In a
-trace, the stored value differs from the user's request while the reply says the job is done.
+trace, the stored value differs from the user's request while the reply says the task is done.
 
 ### 4. Limit the loop and write the answer at the limit
 
@@ -476,10 +476,10 @@ the old default would have shown the model no allowed values at all.
 | File | What it shows | Data behind it |
 |---|---|---|
 | `hero-what-the-model-read.png` | One rejected `create_ticket` call and the three texts the harness can send back | `experiment/sweep/runs.jsonl` and `results.csv` |
-| `series-map-part1.png` | The eight jobs, with job 1 highlighted | None |
-| `design-review.png` | The design review above, one row per job | The list in [A harness design review](#a-harness-design-review) |
+| `series-map-part1.png` | The eight parts, with Part 1 highlighted | None |
+| `design-review.png` | The design review above, one row per part | The list in [A harness design review](#a-harness-design-review) |
 | `run-results.png` | How the 20 runs of each model ended, by task and text | `experiment/sweep/results.csv`, read at render time |
-| `same-model-different-harness.png` | Harness-Bench scores for two models, GPT-5.6 Sol and Qwen3.8-27B, each in seven agents | `figures/data/harness-bench-v2-chart-rows.csv`, from Table 2 of arXiv 2605.27922v2 |
+| `same-model-different-harness.png` | Harness-Bench scores for two models, GPT-5.6 Sol and Qwen3.8-27B, each in seven agents | `figures/data/harness-bench-v2-chart-rows.csv`, from the Harness-Bench paper (arXiv 2605.27922v2) |
 
 You need Node.js 20.3 or newer. Each script in `figures/src/` draws an SVG and renders it to PNG
 through [sharp](https://sharp.pixelplumbing.com), pinned to 0.34.5 in `figures/package.json`. It
@@ -505,7 +505,7 @@ WORDING="$PWD/part1-loop-and-readback/README.md" npm --prefix part1-loop-and-rea
 
 [`.github/workflows/reproduce.yml`](../.github/workflows/reproduce.yml) runs on every push and
 pull request, on Ubuntu with the Python version in `.python-version`. No step calls a model.
-The job has five steps.
+The workflow has five steps.
 
 1. Install the pinned SDK (0.24.0) with pytest in one venv, and openai-agents 0.22.3 in a second
    one.
