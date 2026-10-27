@@ -216,7 +216,7 @@ const FOOT = [
   { gap: 12, runs: [s('*By default the Claude Agent SDK denies a custom tool call that nobody approved.')],
     ev: [['Claude Agent SDK', 'denies the MCP call before the handler runs']],
     rev: [['file:claude-agent-sdk/output.txt', 'so it would deny this MCP call before the handler runs']] },
-  { runs: [s('The check approved the tool so the call could run.')],
+  { runs: [s('The row shows what happens once the tool is approved.')],
     ev: [['Claude Agent SDK', 'This only happens once the call is allowed']],
     rev: [['file:claude-agent-sdk/output.txt', 'This section shows what the model reads once the call is allowed to run.']] },
   { gap: 12, runs: [s('Source: the check scripts in framework-defaults/ in this repo.')] },

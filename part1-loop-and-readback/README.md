@@ -84,7 +84,7 @@ enforces the limits and rules, and your team decides what proves it works.
 3. **Context and memory** (Part 3). Pattern: keep standing rules in a file added to every call. Anti-pattern: trust automatic compaction, which [may drop early instructions](https://code.claude.com/docs/en/agent-sdk/agent-loop#automatic-compaction).
 4. **Sub-agents and handoffs** (Part 4). Pattern: define what a sub-agent's answer must carry back. Anti-pattern: accept a free-form summary that drops a rule.
 5. **Recovery** (Part 5). Pattern: put an idempotency key on every tool that changes data. Anti-pattern: retry or resume a write without one.
-6. **Authority** (Part 6). Pattern: enforce rules in the tool or an approval step. Anti-pattern: a rule only in the prompt, with approval off, which is the [default](https://github.com/openai/openai-agents-python/blob/v0.24.0/src/agents/tool.py#L500-L502) in every framework in [`framework-defaults/`](framework-defaults/README.md) except the Claude Agent SDK.
+6. **Authority** (Part 6). Pattern: enforce rules in the tool or an approval step. Anti-pattern: a rule only in the prompt, with approval off, which is the default in every framework in [`framework-defaults/`](framework-defaults/README.md) except the Claude Agent SDK.
 7. **Evidence before release** (Part 7, team work). Pattern: run each change many times and grade the outcome against the user's request. Anti-pattern: ship on one good run.
 8. **Ownership after launch** (Part 8, team work). Pattern: name who reads traces and who removes parts a newer model no longer needs. Anti-pattern: keep every workaround, like the context resets Anthropic built for Sonnet 4.5 that became "[dead weight](https://claude.com/resources/articles/harnessing-claudes-intelligence)" on Opus 4.5.
 

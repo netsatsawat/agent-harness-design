@@ -137,13 +137,13 @@ strands-agents 1.62.0, the Python SDK.
   which the decorator passes through unchanged.
 - **Loop limit.** A single `Agent` has no default turn limit. Each turn calls the next one
   recursively, so unless something cancels the run, a model that keeps calling tools runs until
-  Python's recursion limit raises `EventLoopException` (cause `RecursionError`) to the caller. The number of model calls before that is a side effect,
-  not a setting. It was 319 in the check (CPython 3.12.13, recursion limit 1000). Every recovery
-  from a context-window overflow resets the stack depth, and a probe with one overflow reached 569
-  calls. The setting is per call, `agent(prompt, limits={"turns": N})`, available since 1.42.0. It
-  stops with `stop_reason` "limit_turns" and raises nothing. Tools that the Nth turn asked for
-  still run first. It returns no final answer: `str(result)` is empty and `result.message` is the
-  last tool result.
+  Python's recursion limit raises `EventLoopException` (cause `RecursionError`) to the caller. The
+  number of model calls before that is a side effect, not a setting. It was 319 in the check
+  (CPython 3.12.13, recursion limit 1000). Every recovery from a context-window overflow resets
+  the stack depth, and a probe with one overflow reached 569 calls. The setting is per call,
+  `agent(prompt, limits={"turns": N})`, available since 1.42.0. It stops with `stop_reason`
+  "limit_turns" and raises nothing. Tools that the Nth turn asked for still run first. It returns
+  no final answer: `str(result)` is empty and `result.message` is the last tool result.
 - **Budget.** The only run-level budget is the per-call `limits` argument: `turns` (in effect a
   count of model calls, not counting throttle retries), `total_tokens` and `output_tokens`. All
   default to `None`, so there is no budget unless the caller passes one. The token caps are soft
@@ -409,15 +409,17 @@ openai-agents 0.24.0, the version the Part 1 experiment runs on. Its facts come 
   stops the run with `ModelBehaviorError` after one model call, because
   `RunConfig.tool_not_found_behavior` defaults to "raise_error".
 - **Set what the model reads.** For one tool, pass `function_tool(f, failure_error_function=fn)`.
-  For every tool in a run, set `RunConfig(tool_error_formatter=fn)`, new in 0.24.0. A per-tool
-  `failure_error_function` wins. With both set, the model read the per-tool text and the formatter
-  was called 0 times. On a schema failure the formatter is called too, but the exception it gets
-  reads only "Invalid JSON input for tool create_ticket", so it cannot tell which field failed.
-  `failure_error_function=None` stops the run instead, with a `UserError` whose cause is the 422.
+  For every tool in a run, set `RunConfig(tool_error_formatter=fn)`, which formats tool exceptions
+  from 0.24.0 on. A per-tool `failure_error_function` wins. With both set, the model read the
+  per-tool text and the formatter was called 0 times. On a schema failure the formatter is called
+  too, but the exception it gets reads only "Invalid JSON input for tool create_ticket", so it
+  cannot tell which field failed. `failure_error_function=None` stops the run instead, with a
+  `UserError` whose cause is the 422.
 - **Loop limit.** `DEFAULT_MAX_TURNS` is 10, and `Runner.run` uses it when `max_turns` is not
   passed. A model that calls a tool forever made 10 model calls and 10 tool runs, then the run
-  raised `MaxTurnsExceeded` to the caller. With `error_handlers={"max_turns": handler}`, the run
-  returns the handler's `final_output` instead, after the same 10 calls.
+  raised `MaxTurnsExceeded` to the caller. The limit counts model calls, not tool runs. With
+  `error_handlers={"max_turns": handler}`, the run returns the handler's `final_output` instead,
+  after the same 10 calls.
 - **Budget.** None. `RunConfig` has no field, and `Runner.run` no parameter, named for a budget,
   cost, token, usage, request or retry limit. In the turn-limit run the stand-in reported 1,000,000
   input tokens per call, 10,000,000 in all, and only the turn limit stopped the run.
@@ -429,7 +431,8 @@ openai-agents 0.24.0, the version the Part 1 experiment runs on. Its facts come 
   approved."
 - **Retry.** No automatic tool retry. The tool body ran once, and the SDK called the model again
   with the fixed line. `ModelSettings.retry` is `None` by default, so retrying the model call is
-  opt-in too.
+  mostly opt-in. One retry is on by default: a `conversation_locked` error from the API is retried
+  up to 3 more times.
 
 ## Run one check
 
