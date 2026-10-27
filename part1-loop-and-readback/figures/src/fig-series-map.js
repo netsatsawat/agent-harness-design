@@ -1,6 +1,6 @@
 // Series map for the agent design series: the model in the middle, the harness around it holding six
-// runtime jobs, and two team jobs outside the harness. Each job carries its part number. One job is
-// drawn in gold: the part the reader is in.
+// runtime parts, and two parts of team work outside the harness. Each chip carries its part number. One chip is
+// drawn in gold: the part the reader is in. The figure says "parts" and "team work", not "jobs".
 // Built to be read at 400 px wide (a 1200-wide canvas shows at 1/3 there), so no text is under 30 px.
 // Run: node fig-series-map.js [part]   (default 1)  -> ../series-map-part<part>.png  (OUT=<dir> to write elsewhere)
 // The geometry trace at the bottom fails the run on any overlap, escape or banned character.
@@ -44,7 +44,7 @@ const eyebrow = `SERIES MAP, PART ${PART} OF 8`;
 T(60, y, eyebrow, { size: 30, family: MONO, fill: P.GOLD_TEXT, spacing: 3 });
 f.raw(`<line x1="60" y1="${y + 22}" x2="${WD - 60}" y2="${y + 22}" stroke="${P.GOLD}" stroke-width="2"/>`);
 y += 92;
-const HEAD = 'Eight jobs around the model, one for each part';
+const HEAD = 'Eight parts of agent design, one article each';   // 1011 px at 48 bold, one line in 1080
 const heads = f.wrap(HEAD, WD - 120, 48, true);
 heads.forEach((s, i) => T(60, y + i * 58, s, { size: 48, weight: 700 }));
 y += (heads.length - 1) * 58 + 30;
@@ -92,12 +92,12 @@ function chip(cx, cy, job, team) {
 const POS = [[-a, -b], [a, -b], [c, 0], [a, b], [-a, b], [-c, 0]];
 POS.forEach(([dx, dy], i) => chip(ECX + dx, MCY + dy, JOBS[i], false));
 
-// ---- team jobs, outside the harness ----
+// ---- team work, outside the harness ----
 const TY = ECY + RY + 40;
 const TH = 236;
 f.group(60, TY, WD - 120, TH, '', { stroke: P.INK3, dashed: true });
 cont('team', 60, TY, WD - 60, TY + TH);
-T(WD / 2, TY + 50, 'Team jobs, outside the harness', { size: 32, weight: 700, fill: P.INK2, anchor: 'middle' }, 'team');
+T(WD / 2, TY + 50, 'Team work, outside the harness', { size: 32, weight: 700, fill: P.INK2, anchor: 'middle' }, 'team');
 const TCY = TY + 80 + CH / 2 + 4;
 // same columns as chips 1/5 and 2/4 above, so the two rows line up
 chip(ECX - a, TCY, JOBS[6], true);

@@ -1,11 +1,11 @@
-// The harness design review on one page: one row per job of the series map, with the question the job answers,
+// The harness design review on one page: one row per part of the series map, with the question the part answers,
 // one pattern, one anti-pattern and the part that goes deep. Row 1 is drawn in gold: the part the reader is in.
 // Pattern and anti-pattern wording is taken word for word from the numbered list under '## A harness design review'
 // in part1-loop-and-readback/README.md. To check that the figure still matches a text, set
 // WORDING=<file.md>: the build reads the numbered list in that file's '## A harness design review' section and
 // fails if any cell is no longer in it, so the figure and the text cannot drift apart. Without WORDING the check
-// is skipped. The questions are new to the figure (the text has no question per job), written from each row's pattern.
-// No measured numbers appear here. Job numbers are part numbers, as on the series map.
+// is skipped. The questions are new to the figure (the text has no question per part), written from each row's pattern.
+// No measured numbers appear here. Row numbers are part numbers, as on the series map.
 // 1200 wide so it still reads at 400 px (no text under 28 px, cells at 30). Run: node fig-design-review.js  (OUT=<dir> elsewhere)
 const fs = require('fs');
 const path = require('path');
@@ -71,7 +71,7 @@ else {
       .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/\s+/g, ' ');
     const low = line.toLowerCase();
     if (!line.includes(`**${r.job}**`)) notes.push(`row ${r.n}: job name "${r.job}" not in the WORDING list`);
-    const part = r.n === PART ? '(this part)' : `(Part ${r.n}${r.team ? ', team job' : ''})`;
+    const part = r.n === PART ? '(this part)' : `(Part ${r.n}${r.team ? ', team work' : ''})`;
     if (!line.includes(part)) notes.push(`row ${r.n}: "${part}" not in the WORDING list`);
     if (!low.includes(`pattern: ${r.p.toLowerCase()}`)) notes.push(`row ${r.n}: pattern differs from WORDING: "${r.p}"`);
     if (!low.includes(`anti-pattern: ${r.a.toLowerCase()}`)) notes.push(`row ${r.n}: anti-pattern differs from WORDING: "${r.a}"`);
@@ -84,9 +84,14 @@ let y = 64;
 T(60, y, 'HARNESS DESIGN REVIEW', { size: 28, family: MONO, fill: P.GOLD_TEXT, spacing: 3 });
 f.raw(`<line x1="60" y1="${y + 22}" x2="${WD - 60}" y2="${y + 22}" stroke="${P.GOLD}" stroke-width="2"/>`);
 y += 92;
-T(60, y, 'This design review works with any model', { size: 46, weight: 700 });
+// 'This design review works with any model or framework' was 1210 px at 46 bold, past the 1080 line, so it got shorter.
+// The heading names frameworks too, because the patterns hold beyond the OpenAI SDK (see framework-defaults/).
+const HEAD = 'A design review for any model or framework';
+if (f.width(HEAD, 46, true) > WD - 120) notes.push(`heading too wide: ${Math.round(f.width(HEAD, 46, true))}`);
+T(60, y, HEAD, { size: 46, weight: 700 });
 y += 54;
-const DEK = ['Each job gets one pattern to build and one', 'anti-pattern to look for in your traces.'];   // balanced by hand
+// balanced by hand: 520 and 549 px, and 'one anti-pattern' stays on one line
+const DEK = ['Each part gets one pattern to build and', 'one anti-pattern to look for in your traces.'];
 DEK.forEach((s, i) => T(60, y + i * 38, s, { size: 30, fill: P.INK2 }));
 y += (DEK.length - 1) * 38 + 66;
 
@@ -164,15 +169,16 @@ function row(r, top) {
 
 for (const r of ROWS.filter(r => !r.team)) y = row(r, y + (r.n > 1 ? RGAP : 0)) ;
 
-// team jobs: a dashed frame a little outside the cards, as on the series map
+// team work: a dashed frame a little outside the cards, as on the series map
 y += 34;
 const GX0 = CX0 - 14, GX1 = CX1 + 14, gTop = y;
 y += 50;
-T(WD / 2, y, 'Team jobs, outside the harness', { size: 30, weight: 700, fill: P.INK2, anchor: 'middle' }, 'team');
+T(WD / 2, y, 'Team work, outside the harness', { size: 30, weight: 700, fill: P.INK2, anchor: 'middle' }, 'team');
 y += 30;
 ROWS.filter(r => r.team).forEach((r, i) => { y = row(r, y + (i ? RGAP : 0)); });
-y += 18;
-f.raw(`<rect x="${GX0}" y="${gTop}" width="${GX1 - GX0}" height="${y - gTop}" rx="14" fill="none" stroke="${P.INK3}" stroke-width="1.6" stroke-dasharray="8 6"/>`);
+y += 24;
+// f.group, not f.raw: group() tracks the frame's bottom, so the canvas leaves a margin under it
+f.group(GX0, gTop, GX1 - GX0, y - gTop, '', { stroke: P.INK3, dashed: true });
 cont('team', GX0, gTop, GX1, y);
 
 // no footer: the figure is the README's own design review, so a source line adds nothing
