@@ -1,0 +1,50 @@
+name: reproduce
+
+on:
+  push:
+  pull_request:
+
+# No step calls a model: the analysis re-reads the committed runs, and the example tests use a
+# scripted stand-in model that never touches the network.
+env:
+  OPENAI_AGENTS_DISABLE_TRACING: "1"
+
+jobs:
+  part1:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: part1-loop-and-readback
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version-file: .python-version
+      - name: Install the pinned SDK (0.24.0) and pytest
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r examples/requirements-test.txt
+      - name: Install openai-agents 0.22.3 in a second venv
+        run: |
+          python -m venv .venv-0.22.3
+          .venv-0.22.3/bin/pip install -r experiment/requirements-0.22.3.lock.txt
+      - name: Re-run the analysis from the committed runs.jsonl and diff results.csv and tests.csv
+        run: |
+          mkdir -p "$RUNNER_TEMP/sweep"
+          cp experiment/sweep/runs.jsonl "$RUNNER_TEMP/sweep/"
+          .venv/bin/python experiment/harness_defaults.py analyze --out "$RUNNER_TEMP/sweep" > analyze.out
+          diff "$RUNNER_TEMP/sweep/results.csv" experiment/sweep/results.csv
+          diff "$RUNNER_TEMP/sweep/tests.csv" experiment/sweep/tests.csv
+      - name: Run the example tests
+        run: .venv/bin/python -m pytest examples
+      - name: Print the SDK error strings under 0.24.0 and 0.22.3 and diff them with expected/
+        run: |
+          .venv/bin/python -I experiment/check_error_strings.py > errors-0.24.0.out
+          diff errors-0.24.0.out expected/check_error_strings-0.24.0.json
+          .venv-0.22.3/bin/python -I experiment/check_error_strings.py > errors-0.22.3.out
+          diff errors-0.22.3.out expected/check_error_strings-0.22.3.json
+      - name: Rebuild sdk_defaults.txt from both installs and fail if it changed
+        # this also re-checks that the old_default arm matches the real 0.22.3 on every error
+        run: |
+          .venv/bin/python experiment/harness_defaults.py defaults > defaults.out
+          git diff --exit-code -- experiment/sdk_defaults.txt

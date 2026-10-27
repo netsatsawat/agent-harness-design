@@ -1,0 +1,25 @@
+model,task,arm_a,arm_b,test,pairs,first_call_identical,overall_a,overall_b,overall_discordant,overall_p,overall_n,fix_a,fix_b,fix_discordant,fix_p,fix_n,overall_p_holm,fix_p_holm,holm_family_size
+qwen3.5:0.8b,priority,note,default,McNemar exact (paired by seed),20,20,16/20,0/20,"a only 16, b only 0",0.0,20,16/16,0/16,"a only 16, b only 0",0.0,16,0.0009,0.0009,48
+qwen3.5:0.8b,priority,old_default,default,McNemar exact (paired by seed),20,20,1/20,0/20,"a only 1, b only 0",1.0,20,1/16,0/16,"a only 1, b only 0",1.0,16,1.0,1.0,48
+qwen3.5:0.8b,phone,note,default,McNemar exact (paired by seed),20,20,0/20,0/20,"a only 0, b only 0",1.0,20,0/7,0/7,"a only 0, b only 0",1.0,7,1.0,1.0,48
+qwen3.5:0.8b,phone,old_default,default,McNemar exact (paired by seed),20,20,2/20,0/20,"a only 2, b only 0",0.5,20,2/7,0/7,"a only 2, b only 0",0.5,7,1.0,1.0,48
+qwen3.5:2b,priority,note,default,McNemar exact (paired by seed),20,20,20/20,0/20,"a only 20, b only 0",0.0,20,20/20,0/20,"a only 20, b only 0",0.0,20,0.0001,0.0001,48
+qwen3.5:2b,priority,old_default,default,McNemar exact (paired by seed),20,20,1/20,0/20,"a only 1, b only 0",1.0,20,1/20,0/20,"a only 1, b only 0",1.0,20,1.0,1.0,48
+qwen3.5:2b,phone,note,default,McNemar exact (paired by seed),20,20,0/20,3/20,"a only 0, b only 3",0.25,20,0/19,3/19,"a only 0, b only 3",0.25,19,1.0,1.0,48
+qwen3.5:2b,phone,old_default,default,McNemar exact (paired by seed),20,20,19/20,3/20,"a only 16, b only 0",0.0,20,19/19,3/19,"a only 16, b only 0",0.0,19,0.0009,0.0009,48
+qwen3.5:4b,priority,note,default,McNemar exact (paired by seed),20,20,20/20,1/20,"a only 19, b only 0",0.0,20,20/20,1/20,"a only 19, b only 0",0.0,20,0.0001,0.0001,48
+qwen3.5:4b,priority,old_default,default,McNemar exact (paired by seed),20,20,2/20,1/20,"a only 1, b only 0",1.0,20,2/20,1/20,"a only 1, b only 0",1.0,20,1.0,1.0,48
+qwen3.5:4b,phone,note,default,McNemar exact (paired by seed),20,20,20/20,1/20,"a only 19, b only 0",0.0,20,20/20,1/20,"a only 19, b only 0",0.0,20,0.0001,0.0001,48
+qwen3.5:4b,phone,old_default,default,McNemar exact (paired by seed),20,20,20/20,1/20,"a only 19, b only 0",0.0,20,20/20,1/20,"a only 19, b only 0",0.0,20,0.0001,0.0001,48
+qwen3.5:9b,priority,note,default,McNemar exact (paired by seed),20,20,20/20,0/20,"a only 20, b only 0",0.0,20,20/20,0/20,"a only 20, b only 0",0.0,20,0.0001,0.0001,48
+qwen3.5:9b,priority,old_default,default,McNemar exact (paired by seed),20,20,19/20,0/20,"a only 19, b only 0",0.0,20,19/20,0/20,"a only 19, b only 0",0.0,20,0.0001,0.0001,48
+qwen3.5:9b,phone,note,default,McNemar exact (paired by seed),20,20,20/20,8/20,"a only 12, b only 0",0.0005,20,20/20,8/20,"a only 12, b only 0",0.0005,20,0.0117,0.0117,48
+qwen3.5:9b,phone,old_default,default,McNemar exact (paired by seed),20,20,20/20,8/20,"a only 12, b only 0",0.0005,20,20/20,8/20,"a only 12, b only 0",0.0005,20,0.0117,0.0117,48
+gpt-6-astra,priority,note,default,Fisher exact (unpaired),,,20/20,0/20,,0.0,20,20/20,0/20,,0.0,20,0.0,0.0,48
+gpt-6-astra,priority,old_default,default,Fisher exact (unpaired),,,20/20,0/20,,0.0,20,20/20,0/20,,0.0,20,0.0,0.0,48
+gpt-6-astra,phone,note,default,Fisher exact (unpaired),,,20/20,20/20,,1.0,20,19/19,13/13,,1.0,13,1.0,1.0,48
+gpt-6-astra,phone,old_default,default,Fisher exact (unpaired),,,20/20,20/20,,1.0,20,19/19,13/13,,1.0,13,1.0,1.0,48
+gpt-6.1-sol,priority,note,default,Fisher exact (unpaired),,,20/20,0/20,,0.0,20,20/20,0/20,,0.0,20,0.0,0.0,48
+gpt-6.1-sol,priority,old_default,default,Fisher exact (unpaired),,,20/20,0/20,,0.0,20,20/20,0/20,,0.0,20,0.0,0.0,48
+gpt-6.1-sol,phone,note,default,Fisher exact (unpaired),,,20/20,20/20,,1.0,20,20/20,19/19,,1.0,19,1.0,1.0,48
+gpt-6.1-sol,phone,old_default,default,Fisher exact (unpaired),,,20/20,20/20,,1.0,20,20/20,19/19,,1.0,19,1.0,1.0,48

@@ -1,0 +1,7 @@
+# The examples run on the experiment's pinned SDK, plus pytest for the tests.
+-r ../experiment/requirements.lock.txt
+iniconfig==2.3.1
+packaging==26.3
+pluggy==1.7.0
+pygments==2.21.0
+pytest==9.1.1

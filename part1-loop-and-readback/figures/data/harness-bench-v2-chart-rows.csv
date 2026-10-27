@@ -1,0 +1,15 @@
+model,harness,score_json,score_paper_table2,r1_full_credit_pct,check,source
+GPT-5.6 Sol,Claude Code,71.6,71.6,22.99,match,harness-bench.ai leaderboard DATA.general.configs; arXiv 2605.27922v2 Table 2 and Table 7
+GPT-5.6 Sol,Codex,69.83,69.8,24.82,match,harness-bench.ai leaderboard DATA.general.configs; arXiv 2605.27922v2 Table 2 and Table 7
+GPT-5.6 Sol,OpenCode,71.03,71.0,27.01,match,harness-bench.ai leaderboard DATA.general.configs; arXiv 2605.27922v2 Table 2 and Table 7
+GPT-5.6 Sol,OpenClaw,73.08,73.1,31.02,match,harness-bench.ai leaderboard DATA.general.configs; arXiv 2605.27922v2 Table 2 and Table 7
+GPT-5.6 Sol,Hermes,71.18,71.2,32.12,match,harness-bench.ai leaderboard DATA.general.configs; arXiv 2605.27922v2 Table 2 and Table 7
+GPT-5.6 Sol,Goose,71.51,71.5,29.2,match,harness-bench.ai leaderboard DATA.general.configs; arXiv 2605.27922v2 Table 2 and Table 7
+GPT-5.6 Sol,Nanobot,66.49,66.5,24.82,match,harness-bench.ai leaderboard DATA.general.configs; arXiv 2605.27922v2 Table 2 and Table 7
+Qwen3.8-27B,Claude Code,61.67,61.7,28.83,match,harness-bench.ai leaderboard DATA.general.configs; arXiv 2605.27922v2 Table 2 and Table 7
+Qwen3.8-27B,Codex,62.42,62.4,29.56,match,harness-bench.ai leaderboard DATA.general.configs; arXiv 2605.27922v2 Table 2 and Table 7
+Qwen3.8-27B,OpenCode,65.1,65.1,33.21,match,harness-bench.ai leaderboard DATA.general.configs; arXiv 2605.27922v2 Table 2 and Table 7
+Qwen3.8-27B,OpenClaw,58.32,58.3,26.28,match,harness-bench.ai leaderboard DATA.general.configs; arXiv 2605.27922v2 Table 2 and Table 7
+Qwen3.8-27B,Hermes,61.75,61.8,25.18,match,harness-bench.ai leaderboard DATA.general.configs; arXiv 2605.27922v2 Table 2 and Table 7
+Qwen3.8-27B,Goose,25.91,25.9,17.88,match,harness-bench.ai leaderboard DATA.general.configs; arXiv 2605.27922v2 Table 2 and Table 7
+Qwen3.8-27B,Nanobot,34.25,34.3,17.15,match,harness-bench.ai leaderboard DATA.general.configs; arXiv 2605.27922v2 Table 2 and Table 7
