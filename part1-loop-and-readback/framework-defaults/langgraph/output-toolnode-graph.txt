@@ -1,0 +1,30 @@
+langchain-core==1.7.0
+langgraph==1.2.18
+langgraph-prebuilt==1.1.1
+langgraph DEFAULT_RECURSION_LIMIT = 10007
+ToolNode(...) handle_tool_errors default: '_default_handle_tool_errors'
+
+##### DEFAULTS UNTOUCHED: hand-built StateGraph + ToolNode(tools) #####
+
+=== F1 tool raises ServerValidationError (priority='high')
+    recursion_limit carried on the compiled graph: None
+    run outcome: EXCEPTION propagated to caller
+    exception type: __main__.ServerValidationError
+    exception str : 422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be 'P0', 'P1' or 'P2'", "input": "high", "ctx": {"expected": "'P0', 'P1' or 'P2'"}}]}
+    tool function executions: 1
+    model calls made: 1
+    turn 2: NEVER HAPPENED (the model was not called again)
+
+=== F3 loop limit: model calls ping() forever, NON-DEFAULT recursion_limit=50
+    run outcome: EXCEPTION propagated to caller
+    exception type: langgraph.errors.GraphRecursionError
+    exception str : Recursion limit of 50 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+    model calls made: 25   ping executions: 25
+
+=== F3 loop limit: model calls ping() forever, DEFAULT limit
+    run outcome: EXCEPTION propagated to caller
+    exception type: langgraph.errors.GraphRecursionError
+    exception str : Recursion limit of 10007 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+    model calls made: 5004   ping executions: 5003
+
+socket connects attempted (all blocked): 0 []

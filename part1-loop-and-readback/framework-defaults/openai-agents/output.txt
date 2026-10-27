@@ -1,0 +1,188 @@
+openai-agents==0.24.0
+openai==3.39.0
+pydantic==2.14.1
+verbatim copy check vs ../../experiment/servers.py: ServerValidationError + ticket_server MATCH
+DEFAULT_MAX_TURNS = 10
+Runner.run defaults: max_turns=10, run_config=None, error_handlers=None
+RunConfig() defaults: tool_error_formatter=None, tool_not_found_behavior='raise_error', tracing_disabled=False
+ModelSettings() defaults: retry=None, max_tokens=None, timeout=None
+create_ticket FunctionTool: needs_approval=False, strict_json_schema=True, timeout_seconds=None
+create_ticket params_json_schema: {"properties": {"title": {"description": "Short summary of the issue.", "title": "Title", "type": "string"}, "priority": {"description": "Priority for the ticket.", "title": "Priority", "type": "string"}}, "required": ["title", "priority"], "title": "create_ticket_args", "type": "object", "additionalProperties": false}
+RunConfig fields named like a budget/limit/retry (budget/cost/token/usage/request/retry/retries): []
+Runner.run parameters named like a budget/limit/retry: []
+
+##### DEFAULTS UNTOUCHED #####
+    Agent(name='ops', model=<stand-in>, tools=[function_tool(create_ticket)])
+    Runner.run(agent, USER)  # no max_turns, run_config, error_handlers or hooks
+
+=== F1 tool raises ServerValidationError (priority='high')
+    turn 1 tool call: create_ticket({"title": "CSV export times out", "priority": "high"})
+    run outcome: RETURNED to caller (no exception)
+    final_output: 'Ticket handled.'
+    interruptions (pending approvals): 0
+    tool function executions: 1
+    model calls made: 2
+    turn 2: system_instructions=None
+    turn 2: input item types, in order: ['user', 'function_call', 'function_call_output']
+    turn 2: model received this tool-result item:
+      {"call_id": "call_1", "output": "An error occurred while running the tool. Please try again.", "type": "function_call_output"}
+      output, printed raw:
+        | An error occurred while running the tool. Please try again.
+
+=== F1b bad args: priority=123 (fails the tool's own schema)
+    turn 1 tool call: create_ticket({"title": "CSV export times out", "priority": 123})
+    run outcome: RETURNED to caller (no exception)
+    final_output: 'Ticket handled.'
+    interruptions (pending approvals): 0
+    tool function executions: 0
+    model calls made: 2
+    turn 2: system_instructions=None
+    turn 2: input item types, in order: ['user', 'function_call', 'function_call_output']
+    turn 2: model received this tool-result item:
+      {"call_id": "call_1", "output": "An error occurred while running the tool. Please try again.", "type": "function_call_output"}
+      output, printed raw:
+        | An error occurred while running the tool. Please try again.
+
+=== F1b bad args: priority missing
+    turn 1 tool call: create_ticket({"title": "CSV export times out"})
+    run outcome: RETURNED to caller (no exception)
+    final_output: 'Ticket handled.'
+    interruptions (pending approvals): 0
+    tool function executions: 0
+    model calls made: 2
+    turn 2: system_instructions=None
+    turn 2: input item types, in order: ['user', 'function_call', 'function_call_output']
+    turn 2: model received this tool-result item:
+      {"call_id": "call_1", "output": "An error occurred while running the tool. Please try again.", "type": "function_call_output"}
+      output, printed raw:
+        | An error occurred while running the tool. Please try again.
+
+=== F1b bad args: unparsable JSON
+    turn 1 tool call: create_ticket({"title": "CSV export times out", "priority": )
+    run outcome: RETURNED to caller (no exception)
+    final_output: 'Ticket handled.'
+    interruptions (pending approvals): 0
+    tool function executions: 0
+    model calls made: 2
+    turn 2: system_instructions=None
+    turn 2: input item types, in order: ['user', 'function_call', 'function_call_output']
+    turn 2: model received this tool-result item:
+      {"call_id": "call_1", "output": "An error occurred while running the tool. Please try again.", "type": "function_call_output"}
+      output, printed raw:
+        | An error occurred while running the tool. Please try again.
+
+=== F1c (extra) model calls a tool name that does not exist ('create_tickets')
+    turn 1 tool call: create_tickets({"title": "CSV export times out", "priority": "P1"})
+    run outcome: EXCEPTION propagated to caller
+    exception type: agents.exceptions.ModelBehaviorError
+    exception str : Tool create_tickets not found in agent ops
+    tool function executions: 0
+    model calls made: 1
+    turn 2: NEVER HAPPENED (the model was not called again)
+
+=== F3+F4 turn limit and budget: model calls ping() forever, every default; the stand-in reports 1,000,000 input tokens per call
+    run outcome: EXCEPTION propagated to caller
+    exception type: agents.exceptions.MaxTurnsExceeded
+    exception str : Max turns (10) exceeded
+    usage on the exception's run_data: requests=10 input_tokens=10000000 output_tokens=10000
+    model calls made: 10   ping executions: 10
+
+    F6 retry: see the F1 row. The tool body ran once; the SDK called the model again
+    with the error line, and nothing in the SDK called the tool a second time.
+
+##### NON-DEFAULT, for F2 only: the knobs that replace the text #####
+
+=== F2a knob: function_tool(failure_error_function=team_note), per tool
+    turn 1 tool call: create_ticket({"title": "CSV export times out", "priority": "high"})
+    run outcome: RETURNED to caller (no exception)
+    final_output: 'Ticket handled.'
+    interruptions (pending approvals): 0
+    tool function executions: 1
+    model calls made: 2
+    turn 2: system_instructions=None
+    turn 2: input item types, in order: ['user', 'function_call', 'function_call_output']
+    turn 2: model received this tool-result item:
+      {"call_id": "call_1", "output": "create_ticket failed: priority must be one of P0 (critical), P1 (high), P2 (normal). Map the user's word to a code and call again.", "type": "function_call_output"}
+      output, printed raw:
+        | create_ticket failed: priority must be one of P0 (critical), P1 (high), P2 (normal). Map the user's word to a code and call again.
+
+=== F2b knob: RunConfig(tool_error_formatter=formatter), run-wide, on the 422
+    turn 1 tool call: create_ticket({"title": "CSV export times out", "priority": "high"})
+    run outcome: RETURNED to caller (no exception)
+    final_output: 'Ticket handled.'
+    interruptions (pending approvals): 0
+    tool function executions: 1
+    model calls made: 2
+    turn 2: system_instructions=None
+    turn 2: input item types, in order: ['user', 'function_call', 'function_call_output']
+    turn 2: model received this tool-result item:
+      {"call_id": "call_1", "output": "The ticket service rejected priority='high'. Allowed values: P0 (critical), P1 (high), P2 (normal).", "type": "function_call_output"}
+      output, printed raw:
+        | The ticket service rejected priority='high'. Allowed values: P0 (critical), P1 (high), P2 (normal).
+    formatter was called with: [{"kind": "tool_exception", "tool_type": "function", "tool_name": "create_ticket", "call_id": "call_1", "default_message": "An error occurred while running the tool. Please try again.", "error": "ServerValidationError: 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}"}]
+
+=== F2b knob: RunConfig(tool_error_formatter=formatter), run-wide, on priority=123 (schema failure)
+    turn 1 tool call: create_ticket({"title": "CSV export times out", "priority": 123})
+    run outcome: RETURNED to caller (no exception)
+    final_output: 'Ticket handled.'
+    interruptions (pending approvals): 0
+    tool function executions: 0
+    model calls made: 2
+    turn 2: system_instructions=None
+    turn 2: input item types, in order: ['user', 'function_call', 'function_call_output']
+    turn 2: model received this tool-result item:
+      {"call_id": "call_1", "output": "An error occurred while running the tool. Please try again.", "type": "function_call_output"}
+      output, printed raw:
+        | An error occurred while running the tool. Please try again.
+    formatter was called with: [{"kind": "tool_exception", "tool_type": "function", "tool_name": "create_ticket", "call_id": "call_1", "default_message": "An error occurred while running the tool. Please try again.", "error": "ModelBehaviorError: Invalid JSON input for tool create_ticket"}]
+
+=== F2b precedence: per-tool failure_error_function AND run-wide tool_error_formatter
+    turn 1 tool call: create_ticket({"title": "CSV export times out", "priority": "high"})
+    run outcome: RETURNED to caller (no exception)
+    final_output: 'Ticket handled.'
+    interruptions (pending approvals): 0
+    tool function executions: 1
+    model calls made: 2
+    turn 2: system_instructions=None
+    turn 2: input item types, in order: ['user', 'function_call', 'function_call_output']
+    turn 2: model received this tool-result item:
+      {"call_id": "call_1", "output": "create_ticket failed: priority must be one of P0 (critical), P1 (high), P2 (normal). Map the user's word to a code and call again.", "type": "function_call_output"}
+      output, printed raw:
+        | create_ticket failed: priority must be one of P0 (critical), P1 (high), P2 (normal). Map the user's word to a code and call again.
+    formatter was called 0 time(s)
+
+=== F2c knob: function_tool(failure_error_function=None), errors propagate
+    turn 1 tool call: create_ticket({"title": "CSV export times out", "priority": "high"})
+    run outcome: EXCEPTION propagated to caller
+    exception type: agents.exceptions.UserError
+    exception str : Error running tool create_ticket: 422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be 'P0', 'P1' or 'P2'", "input": "high", "ctx": {"expected": "'P0', 'P1' or 'P2'"}}]}
+    __cause__     : ServerValidationError: 422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be 'P0', 'P1' or 'P2'", "input": "high", "ctx": {"expected": "'P0', 'P1' or 'P2'"}}]}
+    tool function executions: 1
+    model calls made: 1
+    turn 2: NEVER HAPPENED (the model was not called again)
+
+##### NON-DEFAULT, for F3 only: error_handlers turns MaxTurnsExceeded into output #####
+
+=== F3 knob: Runner.run(..., error_handlers={'max_turns': on_max_turns})
+    run outcome: RETURNED to caller (no exception)
+    final_output: 'Stopped after the turn limit. The ticket was not filed.'
+    last new_item: MessageOutputItem 'Stopped after the turn limit. The ticket was not filed.'
+    usage seen by the run: requests=10 input_tokens=10000000 output_tokens=10000
+    model calls made: 10   ping executions: 10
+    handler saw: ['error=MaxTurnsExceeded: Max turns (10) exceeded; run_data.new_items=20; raw_responses=10']
+
+##### NON-DEFAULT, for F5 only: needs_approval=True #####
+
+=== F5 knob: function_tool(needs_approval=True), valid call priority='P1'
+    run outcome: RETURNED; final_output=None; interruptions=[('ToolApprovalItem', 'create_ticket')]
+    tool function executions: 0   model calls made: 1
+    after state.reject(...) and Runner.run(agent, state):
+    final_output='Ticket handled.'; tool function executions: 0; model calls made: 2
+    turn 2: system_instructions=None
+    turn 2: input item types, in order: ['user', 'function_call', 'function_call_output']
+    turn 2: model received this tool-result item:
+      {"call_id": "call_1", "output": "Tool execution was not approved.", "type": "function_call_output"}
+      output, printed raw:
+        | Tool execution was not approved.
+
+socket connects / DNS lookups attempted (all blocked): 0 []

@@ -1,0 +1,275 @@
+python 3.12.13  pydantic_ai 2.61.0
+[
+  {
+    "scenario": "A_default_tool_raises_ServerValidationError",
+    "run_outcome": "raised",
+    "exception_type": "__main__.ServerValidationError",
+    "exception_message": "422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}",
+    "model_calls": 1,
+    "history_messages": 3,
+    "history_parts": [
+      "ModelRequest:UserPromptPart",
+      "ModelResponse:ToolCallPart",
+      "ModelRequest:"
+    ]
+  },
+  {
+    "scenario": "B_bad_args_priority_int",
+    "run_outcome": "returned",
+    "output": "'ok'",
+    "usage_requests": 2,
+    "model_calls": 2,
+    "history_messages": 4,
+    "history_parts": [
+      "ModelRequest:UserPromptPart",
+      "ModelResponse:ToolCallPart",
+      "ModelRequest:ToolReturnPart[retried]",
+      "ModelResponse:TextPart"
+    ],
+    "turn2_model_received": {
+      "kind": "ModelRequest",
+      "parts": [
+        {
+          "part_type": "ToolReturnPart",
+          "tool_name": "create_ticket",
+          "outcome": "retried",
+          "content": [
+            {
+              "type": "string_type",
+              "loc": [
+                "priority"
+              ],
+              "msg": "Input should be a valid string",
+              "input": 123
+            }
+          ],
+          "retry": "RetryInfo(cause='validation_error', attempt=1, max_retries=1)",
+          "openai_chat_role_tool_content": "{\"error\":[{\"type\":\"string_type\",\"loc\":[\"priority\"],\"msg\":\"Input should be a valid string\",\"input\":123}]}",
+          "native_channel_text": "[{\"type\":\"string_type\",\"loc\":[\"priority\"],\"msg\":\"Input should be a valid string\",\"input\":123}]",
+          "native_error_flag": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario": "B2_missing_priority",
+    "run_outcome": "returned",
+    "output": "'ok'",
+    "usage_requests": 2,
+    "model_calls": 2,
+    "history_messages": 4,
+    "history_parts": [
+      "ModelRequest:UserPromptPart",
+      "ModelResponse:ToolCallPart",
+      "ModelRequest:ToolReturnPart[retried]",
+      "ModelResponse:TextPart"
+    ],
+    "turn2_model_received": {
+      "kind": "ModelRequest",
+      "parts": [
+        {
+          "part_type": "ToolReturnPart",
+          "tool_name": "create_ticket",
+          "outcome": "retried",
+          "content": [
+            {
+              "type": "missing",
+              "loc": [
+                "priority"
+              ],
+              "msg": "Field required",
+              "input": {
+                "title": "CSV export times out"
+              }
+            }
+          ],
+          "retry": "RetryInfo(cause='validation_error', attempt=1, max_retries=1)",
+          "openai_chat_role_tool_content": "{\"error\":[{\"type\":\"missing\",\"loc\":[\"priority\"],\"msg\":\"Field required\",\"input\":{\"title\":\"CSV export times out\"}}]}",
+          "native_channel_text": "[{\"type\":\"missing\",\"loc\":[\"priority\"],\"msg\":\"Field required\",\"input\":{\"title\":\"CSV export times out\"}}]",
+          "native_error_flag": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario": "B3_bad_args_every_turn",
+    "run_outcome": "raised",
+    "exception_type": "pydantic_ai.exceptions.UnexpectedModelBehavior",
+    "exception_message": "Tool 'create_ticket' exceeded max retries count of 1. Consider raising the retry limit, or see the docs on tool retries: https://pydantic.dev/docs/ai/tools-toolsets/tools-advanced/#tool-retries",
+    "exception_cause": "ValidationError: 1 validation error for create_ticket\npriority\n  Input should be a valid string [type=string_type, input_value=123, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.14/v/string_type",
+    "model_calls": 2,
+    "history_messages": 5,
+    "history_parts": [
+      "ModelRequest:UserPromptPart",
+      "ModelResponse:ToolCallPart",
+      "ModelRequest:ToolReturnPart[retried]",
+      "ModelResponse:ToolCallPart",
+      "ModelRequest:"
+    ],
+    "turn2_model_received": {
+      "kind": "ModelRequest",
+      "parts": [
+        {
+          "part_type": "ToolReturnPart",
+          "tool_name": "create_ticket",
+          "outcome": "retried",
+          "content": [
+            {
+              "type": "string_type",
+              "loc": [
+                "priority"
+              ],
+              "msg": "Input should be a valid string",
+              "input": 123
+            }
+          ],
+          "retry": "RetryInfo(cause='validation_error', attempt=1, max_retries=1)",
+          "openai_chat_role_tool_content": "{\"error\":[{\"type\":\"string_type\",\"loc\":[\"priority\"],\"msg\":\"Input should be a valid string\",\"input\":123}]}",
+          "native_channel_text": "[{\"type\":\"string_type\",\"loc\":[\"priority\"],\"msg\":\"Input should be a valid string\",\"input\":123}]",
+          "native_error_flag": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario": "C1_tool_raises_ModelRetry_with_exception_text",
+    "run_outcome": "returned",
+    "output": "'ok'",
+    "usage_requests": 2,
+    "model_calls": 2,
+    "history_messages": 4,
+    "history_parts": [
+      "ModelRequest:UserPromptPart",
+      "ModelResponse:ToolCallPart",
+      "ModelRequest:ToolReturnPart[retried]",
+      "ModelResponse:TextPart"
+    ],
+    "turn2_model_received": {
+      "kind": "ModelRequest",
+      "parts": [
+        {
+          "part_type": "ToolReturnPart",
+          "tool_name": "create_ticket",
+          "outcome": "retried",
+          "content": "422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}",
+          "retry": "RetryInfo(cause='model_retry', attempt=1, max_retries=1)",
+          "openai_chat_role_tool_content": "{\"error\":\"422 Unprocessable Entity: {\\\"detail\\\": [{\\\"type\\\": \\\"enum\\\", \\\"loc\\\": [\\\"body\\\", \\\"priority\\\"], \\\"msg\\\": \\\"Input should be 'P0', 'P1' or 'P2'\\\", \\\"input\\\": \\\"high\\\", \\\"ctx\\\": {\\\"expected\\\": \\\"'P0', 'P1' or 'P2'\\\"}}]}\"}",
+          "native_channel_text": "422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}",
+          "native_error_flag": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario": "C2_tool_raises_ToolFailed_with_exception_text",
+    "run_outcome": "returned",
+    "output": "'ok'",
+    "usage_requests": 2,
+    "model_calls": 2,
+    "history_messages": 4,
+    "history_parts": [
+      "ModelRequest:UserPromptPart",
+      "ModelResponse:ToolCallPart",
+      "ModelRequest:ToolReturnPart[failed]",
+      "ModelResponse:TextPart"
+    ],
+    "turn2_model_received": {
+      "kind": "ModelRequest",
+      "parts": [
+        {
+          "part_type": "ToolReturnPart",
+          "tool_name": "create_ticket",
+          "outcome": "failed",
+          "content": "422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}",
+          "retry": "None",
+          "openai_chat_role_tool_content": "{\"error\":\"422 Unprocessable Entity: {\\\"detail\\\": [{\\\"type\\\": \\\"enum\\\", \\\"loc\\\": [\\\"body\\\", \\\"priority\\\"], \\\"msg\\\": \\\"Input should be 'P0', 'P1' or 'P2'\\\", \\\"input\\\": \\\"high\\\", \\\"ctx\\\": {\\\"expected\\\": \\\"'P0', 'P1' or 'P2'\\\"}}]}\"}",
+          "native_channel_text": "422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}",
+          "native_error_flag": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario": "C3_capability_on_tool_execute_error",
+    "run_outcome": "returned",
+    "output": "'ok'",
+    "usage_requests": 2,
+    "model_calls": 2,
+    "history_messages": 4,
+    "history_parts": [
+      "ModelRequest:UserPromptPart",
+      "ModelResponse:ToolCallPart",
+      "ModelRequest:ToolReturnPart[failed]",
+      "ModelResponse:TextPart"
+    ],
+    "turn2_model_received": {
+      "kind": "ModelRequest",
+      "parts": [
+        {
+          "part_type": "ToolReturnPart",
+          "tool_name": "create_ticket",
+          "outcome": "failed",
+          "content": "create_ticket failed: 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}",
+          "retry": "None",
+          "openai_chat_role_tool_content": "{\"error\":\"create_ticket failed: 422 Unprocessable Entity: {\\\"detail\\\": [{\\\"type\\\": \\\"enum\\\", \\\"loc\\\": [\\\"body\\\", \\\"priority\\\"], \\\"msg\\\": \\\"Input should be 'P0', 'P1' or 'P2'\\\", \\\"input\\\": \\\"high\\\", \\\"ctx\\\": {\\\"expected\\\": \\\"'P0', 'P1' or 'P2'\\\"}}]}\"}",
+          "native_channel_text": "create_ticket failed: 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}",
+          "native_error_flag": true
+        }
+      ]
+    }
+  },
+  {
+    "scenario": "D_tool_called_forever_default_limits",
+    "run_outcome": "raised",
+    "exception_type": "pydantic_ai.exceptions.UsageLimitExceeded",
+    "exception_message": "The next request would exceed the request_limit of 50. Consider raising the limit, or see the docs on usage limits for budget-aware patterns: https://pydantic.dev/docs/ai/core-concepts/agent/#usage-limits",
+    "model_calls": 50,
+    "history_messages": 101,
+    "history_parts": [
+      "ModelRequest:UserPromptPart",
+      "ModelResponse:ToolCallPart",
+      "ModelRequest:ToolReturnPart[success]",
+      "... 95 more messages ...",
+      "ModelRequest:ToolReturnPart[success]",
+      "ModelResponse:ToolCallPart",
+      "ModelRequest:ToolReturnPart[success]"
+    ],
+    "default_UsageLimits": {
+      "cost_limit": null,
+      "request_limit": 50,
+      "tool_calls_limit": null,
+      "input_tokens_limit": null,
+      "output_tokens_limit": null,
+      "total_tokens_limit": null,
+      "per_request_input_tokens_limit": null,
+      "count_tokens_before_request": false
+    }
+  },
+  {
+    "scenario": "E1_requires_approval_default_output_type",
+    "run_outcome": "raised",
+    "exception_type": "pydantic_ai.exceptions.UserError",
+    "exception_message": "A deferred tool call was present, but `DeferredToolRequests` is not among output types. To resolve this, add `DeferredToolRequests` to the list of output types for this agent, or use a `HandleDeferredToolCalls` capability to handle deferred tool calls inline.",
+    "model_calls": 1,
+    "history_messages": 3,
+    "history_parts": [
+      "ModelRequest:UserPromptPart",
+      "ModelResponse:ToolCallPart",
+      "ModelRequest:"
+    ],
+    "tool_body_executed": 0
+  },
+  {
+    "scenario": "E2_requires_approval_output_DeferredToolRequests",
+    "run_outcome": "returned",
+    "output": "DeferredToolRequests(calls=[], approvals=[ToolCallPart(tool_name='create_ticket', args={'title': 'CSV export times out', 'priority': 'P1'}, tool_call_id='pyd_ai_345d9decbbd94c0fb6d4d961dc3376dc')], metadata={})",
+    "usage_requests": 1,
+    "model_calls": 1,
+    "history_messages": 2,
+    "history_parts": [
+      "ModelRequest:UserPromptPart",
+      "ModelResponse:ToolCallPart"
+    ],
+    "tool_body_executed": 0
+  }
+]
