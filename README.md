@@ -12,7 +12,10 @@ stayed the same, and only the code around the model changed.
 That code is the harness, and this repo is about designing it. You want an agent you can trust:
 one that does what the user asked, stays inside its limits, recovers when a call fails and
 leaves a record you can check. The harness code does most of that work, so if your team does
-not design the harness, your framework's defaults do.
+not design the harness, your framework's defaults do. The [framework
+checks](part1-loop-and-readback/framework-defaults/README.md) show how far those defaults differ.
+The same failed call stops the run in LangGraph, reaches the model as the raw exception in
+Strands, and becomes a fixed line in the OpenAI Agents SDK.
 
 This series splits the work into eight parts, one article each. Every part names its
 patterns and pairs each one with its anti-pattern, the thing teams or framework defaults often
@@ -80,7 +83,8 @@ part1-loop-and-readback/
   examples/                       the six patterns as small code, one agent with all six, pytest tests
   experiment/                     the experiment behind the Part 1 numbers, its pinned dependencies, its results
   expected/                       what check_error_strings.py prints under each SDK version
-  figures/                        the five Part 1 figures and the scripts that draw them
+  framework-defaults/             the same failing tool in eight frameworks, every default left alone
+  figures/                        the six Part 1 figures and the scripts that draw them
 LICENSE                           MIT
 ```
 

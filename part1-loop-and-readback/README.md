@@ -16,7 +16,7 @@ OpenAI had a fair reason for the change. The fixed line keeps the raw exception,
 private in it, out of the model's context. But the team that built the agent never chose it.
 
 **Goal.** A way to design the first part of the harness, the loop and what the model reads back,
-that works with any model.
+that works with any model or framework.
 
 **Takeaway.** Trust comes from the harness you design, not from the model or your framework's
 defaults.
@@ -59,6 +59,18 @@ are real.*
 `experiment/sdk_defaults.txt` records both default handlers as read from the installed source of
 each SDK version, with what each one returns for the errors in this experiment.
 
+### The same call in eight frameworks
+
+The experiment runs on the OpenAI Agents SDK. [`framework-defaults/`](framework-defaults/README.md)
+puts the same ticket tool inside eight frameworks' own agent loops, with every default left alone
+and a scripted stand-in model, and the same rejected call ends three ways. LangGraph, Google ADK and
+Pydantic AI stop the run and hand the exception to your code, so the model never gets a chance to
+fix its call. Strands and CrewAI pass the raw exception to the model, and so does the Claude Agent
+SDK once you approve the tool. The OpenAI Agents SDK and Microsoft Agent Framework send a fixed line
+that hides it. The limits differ too. Strands and the Claude Agent SDK set no turn limit, and none
+of the eight sets a budget. Each framework's folder holds its check script, its pinned requirements
+and its output.
+
 ## A harness design review
 
 The series splits the work around the model into eight parts. Each part gets one pattern and one
@@ -72,7 +84,7 @@ enforces the limits and rules, and your team decides what proves it works.
 3. **Context and memory** (Part 3). Pattern: keep standing rules in a file added to every call. Anti-pattern: trust automatic compaction, which [may drop early instructions](https://code.claude.com/docs/en/agent-sdk/agent-loop#automatic-compaction).
 4. **Sub-agents and handoffs** (Part 4). Pattern: define what a sub-agent's answer must carry back. Anti-pattern: accept a free-form summary that drops a rule.
 5. **Recovery** (Part 5). Pattern: put an idempotency key on every tool that changes data. Anti-pattern: retry or resume a write without one.
-6. **Authority** (Part 6). Pattern: enforce rules in the tool or an approval step. Anti-pattern: a rule only in the prompt, with approval off, which is the OpenAI SDK's [default](https://github.com/openai/openai-agents-python/blob/v0.24.0/src/agents/tool.py#L500-L502).
+6. **Authority** (Part 6). Pattern: enforce rules in the tool or an approval step. Anti-pattern: a rule only in the prompt, with approval off, which is the [default](https://github.com/openai/openai-agents-python/blob/v0.24.0/src/agents/tool.py#L500-L502) in every framework in [`framework-defaults/`](framework-defaults/README.md) except the Claude Agent SDK.
 7. **Evidence before release** (Part 7, team work). Pattern: run each change many times and grade the outcome against the user's request. Anti-pattern: ship on one good run.
 8. **Ownership after launch** (Part 8, team work). Pattern: name who reads traces and who removes parts a newer model no longer needs. Anti-pattern: keep every workaround, like the context resets Anthropic built for Sonnet 4.5 that became "[dead weight](https://claude.com/resources/articles/harnessing-claudes-intelligence)" on Opus 4.5.
 
@@ -113,18 +125,25 @@ The two hooks do not combine. If you pass any `failure_error_function` to a tool
 own `default_tool_error_function`, that tool ignores `tool_error_formatter`. A test in
 `test_p6_explicit_defaults.py` pins this down, so pick one hook per tool on purpose.
 
-Outside this SDK, the idea is the same. In LangGraph, use `handle_tool_errors`. For an HTTP API,
-read the field from the response body, because the error from [requests'
-`raise_for_status()`](https://github.com/psf/requests/blob/main/src/requests/models.py) holds
-only the status, the reason and the URL.
+Outside this SDK, the idea is the same. In LangChain's `create_agent`, add
+[`ToolErrorMiddleware`](https://github.com/langchain-ai/langchain/blob/langchain%3D%3D1.4.7/libs/langchain_v1/langchain/agents/middleware/tool_error.py#L37-L90)
+with an `on_error` function. In Strands, add an
+[`AfterToolCallEvent`](https://github.com/strands-agents/harness-sdk/blob/python/v1.62.0/strands-py/src/strands/hooks/events.py#L261-L309)
+hook that replaces the result. [`framework-defaults/`](framework-defaults/README.md) names where to
+add it in the other five frameworks. Where the default stops the run, the same hook keeps it going,
+so the model gets a chance to fix its call. For an HTTP API, read the field from the response body,
+because the error from [requests'
+`raise_for_status()`](https://github.com/psf/requests/blob/main/src/requests/models.py) holds only
+the status, the reason and the URL.
 
 **Check.** Make each tool fail once on purpose, then find the exact text the model got in the
 trace. In the tests, `ScriptedModel.tool_outputs_read` holds that text.
 
-**Anti-pattern: the fixed "Please try again." line.** It is the current OpenAI default for any
-tool without its own handler, and it hides the one fact the model needs. In the experiment, most
-runs that gave up after this line told the user the tool or the system had failed. In a trace,
-every failure returns the same sentence, whatever field was wrong.
+**Anti-pattern: the fixed "Please try again." line.** It is the current OpenAI default for any tool
+without its own handler, and Microsoft Agent Framework sends a similar one, "Error: Function
+failed." It hides the one fact the model needs. In the experiment, most runs that gave up after this
+line told the user the tool or the system had failed. In a trace, every failure returns the same
+sentence, whatever field was wrong.
 
 ### 2. Send approved text instead of the raw exception
 
@@ -147,10 +166,10 @@ codes without their meaning. In the experiment, the 0.8B, 2B and 4B models then 
 code for critical, in 15, 19 and 18 of 20 runs. An enum in the tool schema would block "high",
 but it would not explain the codes either.
 
-**Anti-pattern: passing the raw exception to the model.** It was the OpenAI default up to
-0.22.3, and a hand-written loop that returns `str(error)` does the same. It can leak private
-data, hide the fix in a long error, or lose the fix when the client keeps only the status line.
-In a trace, look for "Traceback", file paths or a full HTTP body.
+**Anti-pattern: passing the raw exception to the model.** It was the OpenAI default up to 0.22.3.
+Strands, CrewAI and the Claude Agent SDK still do it, and so does a hand-written loop that returns
+`str(error)`. It can leak private data, hide the fix in a long error, or lose the fix when the
+client keeps only the status line. In a trace, look for "Traceback", file paths or a full HTTP body.
 
 ### 3. Judge a call by the value it stored
 
@@ -185,10 +204,14 @@ hears at the limit: what was done, what failed and what comes next.
 
 **Apply.** `examples/p4_turn_limit.py` sets `MAX_TURNS = 6` and adds a `max_turns` entry to
 [`error_handlers`](https://openai.github.io/openai-agents-python/running_agents/), so the run
-returns a final answer instead of raising `MaxTurnsExceeded`. `answer_at_limit` builds that
-answer from the run's record: what was saved, how many calls were rejected, and that a person
-now has the request. The OpenAI Agents SDK has no cost budget setting, so the turn limit also
-bounds cost. In the Claude Agent SDK, set `max_turns` and `max_budget_usd`, and turn the
+returns a final answer instead of raising `MaxTurnsExceeded`. `answer_at_limit` builds that answer
+from the run's record: what was saved, how many calls were rejected, and that a person now has the
+request. The OpenAI Agents SDK has no cost budget setting, so the turn limit also bounds cost. In
+LangChain's `create_agent`, add
+[`ModelCallLimitMiddleware`](https://github.com/langchain-ai/langchain/blob/langchain%3D%3D1.4.7/libs/langchain_v1/langchain/agents/middleware/model_call_limit.py#L126-L132)
+with a `run_limit`, which ends the run with a message instead of an exception. In Strands, pass
+`limits={"turns": N}` on each call and write the answer yourself, because the result at the limit
+has no text. In the Claude Agent SDK, set `max_turns` and `max_budget_usd`, and turn the
 `error_max_turns` and `error_max_budget_usd` results into the same kind of answer.
 
 **Check.** Lower the limit to two turns in a test and read what the user receives.
@@ -198,12 +221,14 @@ whole message. Its second test shows that without the handler, the same run only
 In the experiment, 17 runs hit the SDK's default limit of 10 turns. Every one ended in an
 exception and no reply.
 
-**Anti-pattern: no limit, or a limit that only raises.** The Claude Agent SDK [has no turn or
-budget limit](https://code.claude.com/docs/en/agent-sdk/agent-loop#turns-and-budget) unless you
-set one. The OpenAI Agents SDK [stops after 10
-turns](https://github.com/openai/openai-agents-python/blob/v0.24.0/src/agents/run_config.py#L45)
-and raises. In your traces, look for runs with no final reply and for runs that cost far more
-than the rest.
+**Anti-pattern: no limit, or a limit that only raises.** Strands and the Claude Agent SDK ship the
+first. The Claude Agent SDK [has no turn or budget
+limit](https://code.claude.com/docs/en/agent-sdk/agent-loop#turns-and-budget) unless you set one.
+The OpenAI Agents SDK, LangChain's `create_agent`, Google ADK and Pydantic AI ship the second. The
+OpenAI Agents SDK [stops after 10
+turns](https://github.com/openai/openai-agents-python/blob/v0.24.0/src/agents/run_config.py#L45) and
+raises. In your traces, look for runs with no final reply and for runs that cost far more than the
+rest.
 
 ### 5. Stop and hand off when there is no progress
 
@@ -250,9 +275,12 @@ reads. `test_p6_explicit_defaults.py` types each expected string out in full ins
 importing it. A change to the note, to your copy of the fixed line or to the SDK's own default
 then fails a test. Another test there asserts that the SDK's default turn limit is still 10.
 
-OpenAI shipped the fixed line in a minor release, with a one-line changelog entry and no warning
-at run time. In the experiment, the four local models fixed 61 of 66 rejected phone calls under
-the old line and 12 of 66 under the fixed line. Nothing else changed between the two.
+OpenAI shipped the fixed line in a minor release, with a one-line changelog entry and no warning at
+run time. Other frameworks change these defaults too. LangGraph's ToolNode used to [catch every tool
+error](https://github.com/langchain-ai/langgraph/blob/prebuilt%3D%3D1.0.1/libs/prebuilt/langgraph/prebuilt/tool_node.py#L299)
+and send it to the model, and since late 2025 it stops the run for most of them. In the experiment,
+the four local models fixed 61 of 66 rejected phone calls under the old line and 12 of 66 under the
+fixed line. Nothing else changed between the two.
 
 **Anti-pattern: upgrading the SDK without re-reading its defaults.** Teams upgrade for a new
 feature, and their tests only check that the tool ran. In your traces, the tool messages change
@@ -265,7 +293,7 @@ failed call, the model now reads a note that says P1 means high. The success res
 stored priority and its meaning, so a test can check it. A repeated failed call goes to a person,
 and at the turn limit the user still hears what was done. Every default is set in code, so an
 upgrade that changes one fails a test. None of this needs a bigger model. When you change the
-model, run the same tests again.
+model or the framework, run the same tests again.
 
 The agent sits on three small files. `ticket_service.py` is a made-up ticket store that accepts
 only P0, P1 and P2. Like many real services, it answers a bad value with a 422 body that lists
@@ -480,11 +508,14 @@ the old default would have shown the model no allowed values at all.
 | `design-review.png` | The design review above, one row per part | The list in [A harness design review](#a-harness-design-review) |
 | `run-results.png` | How the 20 runs of each model ended, by task and text | `experiment/sweep/results.csv`, read at render time |
 | `same-model-different-harness.png` | Harness-Bench scores for two models, GPT-5.6 Sol and Qwen3.8-27B, each in seven agents | `figures/data/harness-bench-v2-chart-rows.csv`, from the Harness-Bench paper (arXiv 2605.27922v2) |
+| `framework-defaults.png` | What eight frameworks do with the rejected ticket call, shown in [`framework-defaults/`](framework-defaults/README.md) | The check outputs and the summary in `framework-defaults/`, checked at render time |
 
 You need Node.js 20.3 or newer. Each script in `figures/src/` draws an SVG and renders it to PNG
 through [sharp](https://sharp.pixelplumbing.com), pinned to 0.34.5 in `figures/package.json`. It
-also checks its own geometry and fails on text that overlaps, text outside its box, type that is
-too small, or a dash or semicolon.
+also checks its own geometry and fails on text that overlaps, text outside its box, type that is too
+small, or a dash or semicolon. The framework figure script also checks its facts. It reads the check
+outputs and the summary in `framework-defaults/`, and fails if a version, setting name, limit number
+or quoted line in the figure is no longer there.
 
 ```bash
 npm --prefix part1-loop-and-readback/figures ci
@@ -518,7 +549,9 @@ The workflow has five steps.
    step also checks again that the `old_default` copy matches the real 0.22.3 on every test
    error.
 
-CI does not render the figures, because they need Helvetica and Menlo. To run the same checks
+CI does not render the figures, because they need Helvetica and Menlo. It does not run the framework
+checks in `framework-defaults/` either, because each one needs its own venv. [Their
+README](framework-defaults/README.md#run-one-check) shows how to run one. To run the same checks
 yourself, set up both venvs as in [Quickstart](#quickstart) and the [local
 run](#run-the-experiment-on-a-local-model-no-api-key-no-spend), then run:
 
@@ -566,8 +599,11 @@ examples/                        the six patterns on OpenAI Agents SDK 0.24.0
   tests/                         pytest tests, no model needed
   requirements-test.txt          the experiment lock plus pytest
 expected/                        what check_error_strings.py prints under each SDK version
+framework-defaults/              the same failing tool in eight frameworks, every default left alone
+  README.md                      what each framework does, and how to run a check
+  <framework>/                   the check script, its pinned requirements and its output
 figures/
-  *.png                          the five figures
+  *.png                          the six figures
   src/                           the scripts that draw them (Node.js and sharp)
   data/                          the chart rows behind same-model-different-harness.png
   package.json                   pins sharp
