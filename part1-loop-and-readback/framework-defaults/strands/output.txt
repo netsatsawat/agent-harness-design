@@ -1,0 +1,209 @@
+strands-agents 1.62.0
+python 3.12.13
+
+===== 1. Tool raises ServerValidationError (the Part 1 422), all defaults =====
+turn 1 tool input sent by the fake model: {"title": "CSV export times out", "priority": "high"}
+
+Tool #1: create_ticket
+ok
+run raised to caller: no; stop_reason='end_turn'
+model calls: 2; create_ticket function body ran: 1 time(s)
+turn 2: last message the model received:
+{
+  "role": "user",
+  "content": [
+    {
+      "toolResult": {
+        "toolUseId": "tooluse_1",
+        "status": "error",
+        "content": [
+          {
+            "text": "Error: ServerValidationError - 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}"
+          }
+        ]
+      }
+    }
+  ]
+}
+turn 2: role='user' status='error'
+turn 2: text verbatim -> Error: ServerValidationError - 422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be 'P0', 'P1' or 'P2'", "input": "high", "ctx": {"expected": "'P0', 'P1' or 'P2'"}}]}
+
+===== 2a. Arguments fail the tool's own schema: priority=123 (int for str) =====
+turn 1 tool input sent by the fake model: {"title": "CSV export times out", "priority": 123}
+
+Tool #1: create_ticket
+ok
+run raised to caller: no; stop_reason='end_turn'
+model calls: 2; create_ticket function body ran: 0 time(s)
+turn 2: last message the model received:
+{
+  "role": "user",
+  "content": [
+    {
+      "toolResult": {
+        "toolUseId": "tooluse_1",
+        "status": "error",
+        "content": [
+          {
+            "text": "Error: Validation failed for input parameters: 1 validation error for Create_ticketTool\npriority\n  Input should be a valid string [type=string_type, input_value=123, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.14/v/string_type"
+          }
+        ]
+      }
+    }
+  ]
+}
+turn 2: role='user' status='error'
+turn 2: text verbatim -> Error: Validation failed for input parameters: 1 validation error for Create_ticketTool
+priority
+  Input should be a valid string [type=string_type, input_value=123, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.14/v/string_type
+
+===== 2b. Arguments fail the tool's own schema: priority missing =====
+turn 1 tool input sent by the fake model: {"title": "CSV export times out"}
+
+Tool #1: create_ticket
+ok
+run raised to caller: no; stop_reason='end_turn'
+model calls: 2; create_ticket function body ran: 0 time(s)
+turn 2: last message the model received:
+{
+  "role": "user",
+  "content": [
+    {
+      "toolResult": {
+        "toolUseId": "tooluse_1",
+        "status": "error",
+        "content": [
+          {
+            "text": "Error: Validation failed for input parameters: 1 validation error for Create_ticketTool\npriority\n  Field required [type=missing, input_value={'title': 'CSV export times out'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.14/v/missing"
+          }
+        ]
+      }
+    }
+  ]
+}
+turn 2: role='user' status='error'
+turn 2: text verbatim -> Error: Validation failed for input parameters: 1 validation error for Create_ticketTool
+priority
+  Field required [type=missing, input_value={'title': 'CSV export times out'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.14/v/missing
+
+===== 3. Model sends unparsable JSON as the tool input =====
+turn 1 tool input sent by the fake model: {"title": "CSV export times out", "priority": 
+
+Tool #1: create_ticket
+tool_name=<create_ticket>, raw_input=<{"title": "CSV export times out", "priority": > | failed to parse tool input json, defaulting to empty dict
+ok
+run raised to caller: no; stop_reason='end_turn'
+model calls: 2; create_ticket function body ran: 0 time(s)
+turn 2: last message the model received:
+{
+  "role": "user",
+  "content": [
+    {
+      "toolResult": {
+        "toolUseId": "tooluse_1",
+        "status": "error",
+        "content": [
+          {
+            "text": "Error: Validation failed for input parameters: 2 validation errors for Create_ticketTool\ntitle\n  Field required [type=missing, input_value={}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.14/v/missing\npriority\n  Field required [type=missing, input_value={}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.14/v/missing"
+          }
+        ]
+      }
+    }
+  ]
+}
+turn 2: role='user' status='error'
+turn 2: text verbatim -> Error: Validation failed for input parameters: 2 validation errors for Create_ticketTool
+title
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.14/v/missing
+priority
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.14/v/missing
+
+===== 4. Default turn limit: a model that calls the failing tool forever (cap 2000) =====
+sys.getrecursionlimit()=1000
+exception=<RecursionError> | event loop cycle failed
+raised to caller: EventLoopException: maximum recursion depth exceeded
+  __cause__: RecursionError: maximum recursion depth exceeded
+  model calls before the raise: 319
+
+===== 5. Default model retry: the model call raises ModelThrottledException once =====
+no exception; stop_reason='end_turn'; model.stream calls=2; retry delay asked of asyncio.sleep before the retry succeeded: [4] s
+
+===== 6a. KNOB (not default): agent(prompt, limits={'turns': 3}) =====
+no exception; stop_reason='limit_turns'; model calls=3
+str(result) = ''
+AgentResult.message (last message in history):
+{
+  "role": "user",
+  "content": [
+    {
+      "toolResult": {
+        "toolUseId": "tooluse_2",
+        "status": "error",
+        "content": [
+          {
+            "text": "Error: ServerValidationError - 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}"
+          }
+        ]
+      }
+    }
+  ],
+  "tracking_id": "0994a031-e257-4cb7-bf44-f94f91b8623b"
+}
+
+===== 6b. KNOB (not default): AfterToolCallEvent hook rewrites the result =====
+hook saw event.exception = ServerValidationError('422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be \'P0\', \'P1\' or \'P2\'", "input": "high", "ctx": {"expected": "\'P0\', \'P1\' or \'P2\'"}}]}')
+hook saw event.result before rewrite:
+{
+  "toolUseId": "tooluse_1",
+  "status": "error",
+  "content": [
+    {
+      "text": "Error: ServerValidationError - 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}"
+    }
+  ]
+}
+turn 2: last message the model received:
+{
+  "role": "user",
+  "content": [
+    {
+      "toolResult": {
+        "toolUseId": "tooluse_1",
+        "status": "error",
+        "content": [
+          {
+            "text": "The ticket service rejected priority='high'. Allowed values: P0 (critical), P1 (high), P2 (normal)."
+          }
+        ]
+      }
+    }
+  ]
+}
+
+===== 6c. KNOB (not default): interventions=[HumanInTheLoop()] =====
+no ask callback: stop_reason='interrupt'; model calls=1; tool body ran 0 time(s)
+  interrupt name='strands:human-in-the-loop' reason='Approve "create_ticket"?\n  Input: {"title": "CSV export times out", "priority": "high"}'
+
+-- HumanInTheLoop(ask=lambda prompt: 'n'), the human says no --
+stop_reason='end_turn'; tool body ran 0 time(s)
+turn 2: last message the model received:
+{
+  "role": "user",
+  "content": [
+    {
+      "toolResult": {
+        "toolUseId": "tooluse_1",
+        "status": "error",
+        "content": [
+          {
+            "text": "CONFIRMATION_FAILED: Approve \"create_ticket\"?\n  Input: {\"title\": \"CSV export times out\", \"priority\": \"high\"}"
+          }
+        ]
+      }
+    }
+  ]
+}
