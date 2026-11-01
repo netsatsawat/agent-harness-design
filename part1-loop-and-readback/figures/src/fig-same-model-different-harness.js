@@ -136,7 +136,9 @@ y = chartBot + 36;
 // ---- footer ----
 y += 64;
 // One short source line. The partial-credit note is in the subtitle, and the version date is the one a reader needs.
-const FOOT = ['Source: Harness-Bench (arXiv 2605.27922 v2, Oct 15, 2026), Table 2.'];
+// The footer names the paper only, never a table or figure number. The numbers are still read from Table 2 and
+// checked against Table 7, as the header comment says.
+const FOOT = ['Source: Harness-Bench (arXiv 2605.27922, revised Oct 15, 2026).'];
 FOOT.forEach((s, i) => {
   if (f.width(s, 28) > WD - 120) notes.push(`footer line too long: "${s}"`);
   T(60, y + i * 37, s, { size: 28, fill: P.INK3 });

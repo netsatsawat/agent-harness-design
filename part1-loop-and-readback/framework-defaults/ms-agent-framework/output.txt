@@ -1,0 +1,360 @@
+python 3.12.13
+agent-framework-core 1.23.0
+default FunctionInvocationConfiguration: {'enabled': True, 'max_iterations': 40, 'max_function_calls': None, 'max_duration_seconds': None, 'max_consecutive_errors_per_request': 3, 'terminate_on_unknown_calls': False, 'include_detailed_errors': False, 'allow_concurrent_invocation': True, 'disable_approval_response_binding': False}
+default approval_mode on @tool: never_require
+default max_invocations / max_invocation_exceptions on @tool: None None
+
+====================================================================================================
+1. DEFAULTS: tool raises ServerValidationError on priority='high'. What does the model get on turn 2?
+====================================================================================================
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log WARNING agent_framework] Function 'create_ticket' raised an exception; returning an error result to the model. Set include_detailed_errors=True for the full detail.
+{
+  "run_outcome": "returned (no exception)",
+  "final_text": "Done.",
+  "user_input_requests": [],
+  "model_calls": 2,
+  "tool_body_ran": 1,
+  "tool_choice_per_turn": [
+    "auto",
+    "auto"
+  ]
+}
+turn-2 request, tool-role messages exactly as the fake model received them:
+[
+  {
+    "role": "tool",
+    "contents": [
+      {
+        "type": "function_result",
+        "call_id": "call_1",
+        "result": "Error: Function failed.",
+        "exception": "422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}",
+        "items": [
+          {
+            "type": "text",
+            "text": "Error: Function failed."
+          }
+        ],
+        "to_dict()['exception']": "FunctionInvocationError"
+      }
+    ]
+  }
+]
+turn-2 request, all message roles in order: ['user', 'assistant', 'tool']
+
+====================================================================================================
+2. DEFAULTS: arguments fail the tool's own schema (priority=123, int for a str)
+====================================================================================================
+{
+  "run_outcome": "returned (no exception)",
+  "final_text": "Done.",
+  "user_input_requests": [],
+  "model_calls": 2,
+  "tool_body_ran": 0,
+  "tool_choice_per_turn": [
+    "auto",
+    "auto"
+  ]
+}
+[
+  {
+    "role": "tool",
+    "contents": [
+      {
+        "type": "function_result",
+        "call_id": "call_1",
+        "result": "Error: Argument parsing failed.",
+        "exception": "Invalid arguments for 'create_ticket': 1 validation error for create_ticket_input\npriority\n  Input should be a valid string [type=string_type, input_value=123, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.14/v/string_type",
+        "items": [
+          {
+            "type": "text",
+            "text": "Error: Argument parsing failed."
+          }
+        ],
+        "to_dict()['exception']": "FunctionInvocationError"
+      }
+    ]
+  }
+]
+
+====================================================================================================
+3. DEFAULTS: required argument missing ({'title': ...} only)
+====================================================================================================
+{
+  "run_outcome": "returned (no exception)",
+  "final_text": "Done.",
+  "user_input_requests": [],
+  "model_calls": 2,
+  "tool_body_ran": 0,
+  "tool_choice_per_turn": [
+    "auto",
+    "auto"
+  ]
+}
+[
+  {
+    "role": "tool",
+    "contents": [
+      {
+        "type": "function_result",
+        "call_id": "call_1",
+        "result": "Error: Argument parsing failed.",
+        "exception": "Invalid arguments for 'create_ticket': 1 validation error for create_ticket_input\npriority\n  Field required [type=missing, input_value={'title': 'CSV export times out'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.14/v/missing",
+        "items": [
+          {
+            "type": "text",
+            "text": "Error: Argument parsing failed."
+          }
+        ],
+        "to_dict()['exception']": "FunctionInvocationError"
+      }
+    ]
+  }
+]
+
+====================================================================================================
+4. DEFAULTS: arguments are not valid JSON
+====================================================================================================
+{
+  "run_outcome": "returned (no exception)",
+  "final_text": "Done.",
+  "user_input_requests": [],
+  "model_calls": 2,
+  "tool_body_ran": 0,
+  "tool_choice_per_turn": [
+    "auto",
+    "auto"
+  ]
+}
+[
+  {
+    "role": "tool",
+    "contents": [
+      {
+        "type": "function_result",
+        "call_id": "call_1",
+        "result": "Error: Argument parsing failed.",
+        "exception": "Invalid arguments for 'create_ticket': 2 validation errors for create_ticket_input\ntitle\n  Field required [type=missing, input_value={'raw': '{\"title\": \"CSV e... out\", \"priority\": \"hi'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.14/v/missing\npriority\n  Field required [type=missing, input_value={'raw': '{\"title\": \"CSV e... out\", \"priority\": \"hi'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.14/v/missing",
+        "items": [
+          {
+            "type": "text",
+            "text": "Error: Argument parsing failed."
+          }
+        ],
+        "to_dict()['exception']": "FunctionInvocationError"
+      }
+    ]
+  }
+]
+
+====================================================================================================
+5. DEFAULTS: model retries the failing call forever (max_consecutive_errors_per_request=3)
+====================================================================================================
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log WARNING agent_framework] Function 'create_ticket' raised an exception; returning an error result to the model. Set include_detailed_errors=True for the full detail.
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log WARNING agent_framework] Function 'create_ticket' raised an exception; returning an error result to the model. Set include_detailed_errors=True for the full detail.
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log WARNING agent_framework] Function 'create_ticket' raised an exception; returning an error result to the model. Set include_detailed_errors=True for the full detail.
+[log WARNING agent_framework] Maximum consecutive function call errors reached (3). Stopping further function calls for this request.
+{
+  "run_outcome": "returned (no exception)",
+  "final_text": "I could not finish.",
+  "user_input_requests": [],
+  "model_calls": 4,
+  "tool_body_ran": 3,
+  "tool_choice_per_turn": [
+    "auto",
+    "auto",
+    "auto",
+    "none"
+  ]
+}
+last request: tool_choice = none | tool results the model has seen: 3
+5b. same, but the fake ignores tool_choice='none' and calls the tool again anyway:
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log WARNING agent_framework] Function 'create_ticket' raised an exception; returning an error result to the model. Set include_detailed_errors=True for the full detail.
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log WARNING agent_framework] Function 'create_ticket' raised an exception; returning an error result to the model. Set include_detailed_errors=True for the full detail.
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log WARNING agent_framework] Function 'create_ticket' raised an exception; returning an error result to the model. Set include_detailed_errors=True for the full detail.
+[log WARNING agent_framework] Maximum consecutive function call errors reached (3). Stopping further function calls for this request.
+{
+  "run_outcome": "returned (no exception)",
+  "final_text": "Function invocation limit reached before a final answer could be produced.",
+  "user_input_requests": [],
+  "model_calls": 4,
+  "tool_body_ran": 3,
+  "tool_choice_per_turn": [
+    "auto",
+    "auto",
+    "auto",
+    "none"
+  ]
+}
+
+====================================================================================================
+6. DEFAULTS: tool always succeeds, model calls it forever (max_iterations=40)
+====================================================================================================
+{
+  "run_outcome": "returned (no exception)",
+  "final_text": "I could not finish.",
+  "user_input_requests": [],
+  "model_calls": 41,
+  "tool_body_ran": 40
+}
+tool_choice on turns 1, 40, 41: auto auto none
+6b. same, but the fake ignores tool_choice='none' on the final call:
+{
+  "run_outcome": "returned (no exception)",
+  "final_text": "Function invocation limit reached before a final answer could be produced.",
+  "user_input_requests": [],
+  "model_calls": 41,
+  "tool_body_ran": 40
+}
+
+====================================================================================================
+7. ONE KNOB: include_detailed_errors=True (global, on the client)
+====================================================================================================
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log WARNING agent_framework] Function 'create_ticket' raised an exception; returning an error result to the model.
+{
+  "run_outcome": "returned (no exception)",
+  "final_text": "Done.",
+  "user_input_requests": [],
+  "model_calls": 2,
+  "tool_body_ran": 1,
+  "tool_choice_per_turn": [
+    "auto",
+    "auto"
+  ]
+}
+[
+  {
+    "role": "tool",
+    "contents": [
+      {
+        "type": "function_result",
+        "call_id": "call_1",
+        "result": "Error: Function failed. Exception: 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}",
+        "exception": "422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}",
+        "items": [
+          {
+            "type": "text",
+            "text": "Error: Function failed. Exception: 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}"
+          }
+        ],
+        "to_dict()['exception']": "FunctionInvocationError"
+      }
+    ]
+  }
+]
+
+====================================================================================================
+8. ONE KNOB: function middleware that replaces the failure text with the team's note
+====================================================================================================
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+{
+  "run_outcome": "returned (no exception)",
+  "final_text": "Done.",
+  "user_input_requests": [],
+  "model_calls": 2,
+  "tool_body_ran": 1,
+  "tool_choice_per_turn": [
+    "auto",
+    "auto"
+  ]
+}
+[
+  {
+    "role": "tool",
+    "contents": [
+      {
+        "type": "function_result",
+        "call_id": "call_1",
+        "result": "priority is not valid. Allowed values: P0 (critical), P1 (high), P2 (normal). Next step: call create_ticket again with priority set to one of these codes.",
+        "items": [
+          {
+            "type": "text",
+            "text": "priority is not valid. Allowed values: P0 (critical), P1 (high), P2 (normal). Next step: call create_ticket again with priority set to one of these codes."
+          }
+        ],
+        "to_dict()['exception']": null
+      }
+    ]
+  }
+]
+8b. same middleware, model retries forever: does the 3-error cap still fire?
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+[log ERROR agent_framework] Function create_ticket failed (ServerValidationError).
+{
+  "run_outcome": "returned (no exception)",
+  "final_text": "I could not finish.",
+  "user_input_requests": [],
+  "model_calls": 41,
+  "tool_body_ran": 40
+}
+tool_choice on the last request: none
+
+====================================================================================================
+9. ONE KNOB: @tool(approval_mode='always_require')
+====================================================================================================
+{
+  "run_outcome": "returned (no exception)",
+  "final_text": "",
+  "user_input_requests": [
+    {
+      "type": "function_approval_request",
+      "function_call": {
+        "type": "function_call",
+        "call_id": "call_1",
+        "name": "create_ticket",
+        "arguments": "{\"title\": \"CSV export times out\", \"priority\": \"high\"}"
+      }
+    }
+  ],
+  "model_calls": 1,
+  "tool_body_ran": 0,
+  "tool_choice_per_turn": [
+    "auto"
+  ]
+}

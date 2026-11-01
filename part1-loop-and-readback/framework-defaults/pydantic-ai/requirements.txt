@@ -1,0 +1,20 @@
+# Pydantic AI, checked on 2026-10-27 with Python 3.12.
+# The framework, at the latest stable release on PyPI that day:
+pydantic-ai-slim==2.61.0
+# Every other package, at the version installed with it for the check:
+annotated-types==0.8.0
+anyio==4.15.1
+genai-prices==0.1.13
+griffelib==2.4.1
+h11==0.16.0
+httpcore2==2.16.0
+httpx2==2.16.0
+idna==3.20
+logfire-api==5.4.0
+opentelemetry-api==1.45.1
+pydantic==2.14.1
+pydantic-core==2.50.1
+pydantic-graph==2.61.0
+truststore==0.10.5
+typing-extensions==4.16.0
+typing-inspection==0.4.4

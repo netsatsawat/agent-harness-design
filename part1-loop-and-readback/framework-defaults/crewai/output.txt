@@ -1,0 +1,471 @@
+crewai 1.15.30  python 3.12.13
+
+==========================================================================================
+SCENARIO 1 native: tool raises ServerValidationError
+==========================================================================================
+agent.max_iter=25 max_rpm=None max_execution_time=None max_retry_limit=2 max_tokens=None tool_failure_policy=None task.human_input=False tool.max_usage_count=None
+LLM calls made: 2
+tool body runs: 1 [{'title': 'CSV export times out', 'priority': 'high'}]
+ToolUsageErrorEvent count: 1 (emitted by ['AgentExecutor'])
+--- messages added between call 1 and call 2 (what the model reads after its tool call), full dicts:
+[
+  {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+      {
+        "id": "call_1",
+        "type": "function",
+        "function": {
+          "name": "create_ticket",
+          "arguments": "{\"title\": \"CSV export times out\", \"priority\": \"high\"}"
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "tool_call_id": "call_1",
+    "name": "create_ticket",
+    "content": "Error executing tool: 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}"
+  }
+]
+--- outcome returned to the caller:
+{
+  "returned": true,
+  "raw": "TCK done",
+  "tool_failures": [
+    {
+      "tool": "create_ticket",
+      "reason": "exception",
+      "code": "ServerValidationError",
+      "message": "422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}"
+    }
+  ]
+}
+
+==========================================================================================
+SCENARIO 2 text/ReAct: tool raises ServerValidationError
+==========================================================================================
+agent.max_iter=25 max_rpm=None max_execution_time=None max_retry_limit=2 max_tokens=None tool_failure_policy=None task.human_input=False tool.max_usage_count=None
+LLM calls made: 2
+tool body runs: 6 [{'title': 'CSV export times out', 'priority': 'high'}, {'title': 'CSV export times out', 'priority': 'high'}, {'title': 'CSV export times out', 'priority': 'high'}] ...
+ToolUsageErrorEvent count: 3 (emitted by ['ToolUsage'])
+--- messages added between call 1 and call 2 (what the model reads after its tool call), full dicts:
+[
+  {
+    "role": "assistant",
+    "content": "Thought: I should file the ticket.\nAction: create_ticket\nAction Input: {\"title\": \"CSV export times out\", \"priority\": \"high\"}\nObservation: \nI encountered an error while trying to use the tool. This was the error: 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}.\n Tool create_ticket accepts these inputs: Tool Name: create_ticket\nTool Arguments: {\n  \"properties\": {\n    \"title\": {\n      \"title\": \"Title\",\n      \"type\": \"string\"\n    },\n    \"priority\": {\n      \"title\": \"Priority\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"title\",\n    \"priority\"\n  ],\n  \"title\": \"Create_Ticket\",\n  \"type\": \"object\",\n  \"additionalProperties\": false\n}\nTool Description: Create a support ticket.\n\n    Args:\n        title: Short summary of the issue.\n        priority: Priority for the ticket.\n    .\nMoving on then. Decide if you need a tool or can provide the final answer. Use one at a time.\nTo use a tool, use:\nThought: [reasoning]\nAction: [name from create_ticket]\nAction Input: [JSON object]\n\nTo provide the final answer, use:\nThought: [reasoning]\nFinal Answer: [complete response]"
+  },
+  {
+    "role": "user",
+    "content": "Analyze the tool result. If requirements are met, provide the Final Answer. Otherwise, call the next tool. Deliver only the answer without meta-commentary."
+  }
+]
+--- outcome returned to the caller:
+{
+  "returned": true,
+  "raw": "done",
+  "tool_failures": [
+    {
+      "tool": "create_ticket",
+      "reason": "exception",
+      "code": "ServerValidationError",
+      "message": "422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}"
+    }
+  ]
+}
+
+==========================================================================================
+SCENARIO 3 native: bad args priority=123
+==========================================================================================
+agent.max_iter=25 max_rpm=None max_execution_time=None max_retry_limit=2 max_tokens=None tool_failure_policy=None task.human_input=False tool.max_usage_count=None
+LLM calls made: 2
+tool body runs: 0 []
+ToolUsageErrorEvent count: 1 (emitted by ['AgentExecutor'])
+--- messages added between call 1 and call 2 (what the model reads after its tool call), full dicts:
+[
+  {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+      {
+        "id": "call_1",
+        "type": "function",
+        "function": {
+          "name": "create_ticket",
+          "arguments": "{\"title\": \"CSV export times out\", \"priority\": 123}"
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "tool_call_id": "call_1",
+    "name": "create_ticket",
+    "content": "Error executing tool: Tool 'create_ticket' arguments validation failed: 1 validation error for Create_Ticket\npriority\n  Input should be a valid string [type=string_type, input_value=123, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_type\nExpected arguments: {\"title\": {\"title\": \"Title\", \"type\": \"string\"}, \"priority\": {\"title\": \"Priority\", \"type\": \"string\"}}\nRequired: [\"title\", \"priority\"]"
+  }
+]
+--- outcome returned to the caller:
+{
+  "returned": true,
+  "raw": "done",
+  "tool_failures": [
+    {
+      "tool": "create_ticket",
+      "reason": "exception",
+      "code": "ValueError",
+      "message": "Tool 'create_ticket' arguments validation failed: 1 validation error for Create_Ticket\npriority\n  Input should be a valid string [type=string_type, input_value=123, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_type\nExpected arguments: {\"title\": {\"title\": \"Title\", \"type\": \"string\"}, \"priority\": {\"title\": \"Priority\", \"type\": \"string\"}}\nRequired: [\"title\", \"priority\"]"
+    }
+  ]
+}
+
+==========================================================================================
+SCENARIO 4 native: missing argument priority
+==========================================================================================
+agent.max_iter=25 max_rpm=None max_execution_time=None max_retry_limit=2 max_tokens=None tool_failure_policy=None task.human_input=False tool.max_usage_count=None
+LLM calls made: 2
+tool body runs: 0 []
+ToolUsageErrorEvent count: 1 (emitted by ['AgentExecutor'])
+--- messages added between call 1 and call 2 (what the model reads after its tool call), full dicts:
+[
+  {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+      {
+        "id": "call_1",
+        "type": "function",
+        "function": {
+          "name": "create_ticket",
+          "arguments": "{\"title\": \"CSV export times out\"}"
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "tool_call_id": "call_1",
+    "name": "create_ticket",
+    "content": "Error executing tool: Tool 'create_ticket' arguments validation failed: 1 validation error for Create_Ticket\npriority\n  Field required [type=missing, input_value={'title': 'CSV export times out'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nExpected arguments: {\"title\": {\"title\": \"Title\", \"type\": \"string\"}, \"priority\": {\"title\": \"Priority\", \"type\": \"string\"}}\nRequired: [\"title\", \"priority\"]"
+  }
+]
+--- outcome returned to the caller:
+{
+  "returned": true,
+  "raw": "done",
+  "tool_failures": [
+    {
+      "tool": "create_ticket",
+      "reason": "exception",
+      "code": "ValueError",
+      "message": "Tool 'create_ticket' arguments validation failed: 1 validation error for Create_Ticket\npriority\n  Field required [type=missing, input_value={'title': 'CSV export times out'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\nExpected arguments: {\"title\": {\"title\": \"Title\", \"type\": \"string\"}, \"priority\": {\"title\": \"Priority\", \"type\": \"string\"}}\nRequired: [\"title\", \"priority\"]"
+    }
+  ]
+}
+
+==========================================================================================
+SCENARIO 5 native: arguments are broken JSON
+==========================================================================================
+agent.max_iter=25 max_rpm=None max_execution_time=None max_retry_limit=2 max_tokens=None tool_failure_policy=None task.human_input=False tool.max_usage_count=None
+LLM calls made: 2
+tool body runs: 0 []
+ToolUsageErrorEvent count: 0 (emitted by [])
+--- messages added between call 1 and call 2 (what the model reads after its tool call), full dicts:
+[
+  {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+      {
+        "id": "call_1",
+        "type": "function",
+        "function": {
+          "name": "create_ticket",
+          "arguments": "{\"title\": \"CSV export times out\", \"priority\": "
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "tool_call_id": "call_1",
+    "name": "create_ticket",
+    "content": "Error: Failed to parse tool arguments as JSON: Expecting value: line 1 column 47 (char 46). Please provide valid JSON arguments for the 'create_ticket' tool."
+  }
+]
+--- outcome returned to the caller:
+{
+  "returned": true,
+  "raw": "done",
+  "tool_failures": [
+    {
+      "tool": "create_ticket",
+      "reason": "invalid_input",
+      "code": "json_decode_error",
+      "message": "Error: Failed to parse tool arguments as JSON: Expecting value: line 1 column 47 (char 46). Please provide valid JSON arguments for the 'create_ticket' tool."
+    }
+  ]
+}
+
+==========================================================================================
+SCENARIO 6 text/ReAct: bad args priority=123
+==========================================================================================
+agent.max_iter=25 max_rpm=None max_execution_time=None max_retry_limit=2 max_tokens=None tool_failure_policy=None task.human_input=False tool.max_usage_count=None
+LLM calls made: 2
+tool body runs: 0 []
+ToolUsageErrorEvent count: 3 (emitted by ['ToolUsage'])
+--- messages added between call 1 and call 2 (what the model reads after its tool call), full dicts:
+[
+  {
+    "role": "assistant",
+    "content": "Thought: I should file the ticket.\nAction: create_ticket\nAction Input: {\"title\": \"CSV export times out\", \"priority\": 123}\nObservation: \nI encountered an error while trying to use the tool. This was the error: Arguments validation failed: 1 validation error for Create_Ticket\npriority\n  Input should be a valid string [type=string_type, input_value=123, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_type\nExpected arguments: {\"title\": {\"title\": \"Title\", \"type\": \"string\"}, \"priority\": {\"title\": \"Priority\", \"type\": \"string\"}}\nRequired: [\"title\", \"priority\"].\n Tool create_ticket accepts these inputs: Tool Name: create_ticket\nTool Arguments: {\n  \"properties\": {\n    \"title\": {\n      \"title\": \"Title\",\n      \"type\": \"string\"\n    },\n    \"priority\": {\n      \"title\": \"Priority\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"title\",\n    \"priority\"\n  ],\n  \"title\": \"Create_Ticket\",\n  \"type\": \"object\",\n  \"additionalProperties\": false\n}\nTool Description: Create a support ticket.\n\n    Args:\n        title: Short summary of the issue.\n        priority: Priority for the ticket.\n    .\nMoving on then. Decide if you need a tool or can provide the final answer. Use one at a time.\nTo use a tool, use:\nThought: [reasoning]\nAction: [name from create_ticket]\nAction Input: [JSON object]\n\nTo provide the final answer, use:\nThought: [reasoning]\nFinal Answer: [complete response]"
+  },
+  {
+    "role": "user",
+    "content": "Analyze the tool result. If requirements are met, provide the Final Answer. Otherwise, call the next tool. Deliver only the answer without meta-commentary."
+  }
+]
+--- outcome returned to the caller:
+{
+  "returned": true,
+  "raw": "done",
+  "tool_failures": [
+    {
+      "tool": "create_ticket",
+      "reason": "exception",
+      "code": "ValueError",
+      "message": "Arguments validation failed: 1 validation error for Create_Ticket\npriority\n  Input should be a valid string [type=string_type, input_value=123, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/string_type\nExpected arguments: {\"title\": {\"title\": \"Title\", \"type\": \"string\"}, \"priority\": {\"title\": \"Priority\", \"type\": \"string\"}}\nRequired: [\"title\", \"priority\"]"
+    }
+  ]
+}
+
+==========================================================================================
+SCENARIO 7 native: model calls the tool forever (default max_iter)
+==========================================================================================
+agent.max_iter=25 max_rpm=None max_execution_time=None max_retry_limit=2 max_tokens=None tool_failure_policy=None task.human_input=False tool.max_usage_count=None
+LLM calls made: 26
+tool body runs: 25 [{'title': 'attempt 1', 'priority': 'P1'}, {'title': 'attempt 2', 'priority': 'P1'}, {'title': 'attempt 3', 'priority': 'P1'}] ...
+ToolUsageErrorEvent count: 0 (emitted by [])
+--- messages added between call 1 and call 2 (what the model reads after its tool call), full dicts:
+[
+  {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+      {
+        "id": "call_1",
+        "type": "function",
+        "function": {
+          "name": "create_ticket",
+          "arguments": "{\"title\": \"attempt 1\", \"priority\": \"P1\"}"
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "tool_call_id": "call_1",
+    "name": "create_ticket",
+    "content": "{\"id\": \"TCK-1042\", \"title\": \"attempt 1\", \"priority\": \"P1\", \"status\": \"open\"}"
+  }
+]
+--- outcome returned to the caller:
+{
+  "returned": true,
+  "raw": "Forced final answer from the fake model.",
+  "tool_failures": []
+}
+--- last LLM call: tools passed = None
+--- last message in the last LLM call:
+{
+  "role": "user",
+  "content": "Now it's time you MUST give your absolute best final answer. You'll ignore all previous instructions, stop using any tools, and just return your absolute BEST Final answer."
+}
+
+==========================================================================================
+SCENARIO 8 native: model repeats the identical failing call forever
+==========================================================================================
+agent.max_iter=25 max_rpm=None max_execution_time=None max_retry_limit=2 max_tokens=None tool_failure_policy=None task.human_input=False tool.max_usage_count=None
+Error executing listener execute_native_tool: Tool 'create_ticket' failed during 'File a high-priority ticket: CSV export times out.': Agent 'Support agent' called 'create_ticket' with the same arguments 5 times and got the same result each time. Stopped because it is not making progress.
+[CrewAIEventsBus] Warning: Event pairing mismatch. 'task_failed' closed 
+'agent_execution_started' (expected 'task_started')
+[CrewAIEventsBus] Warning: Event pairing mismatch. 'crew_kickoff_failed' closed 
+'task_started' (expected 'crew_kickoff_started')
+LLM calls made: 5
+tool body runs: 5 [{'title': 'CSV export times out', 'priority': 'high'}, {'title': 'CSV export times out', 'priority': 'high'}, {'title': 'CSV export times out', 'priority': 'high'}] ...
+ToolUsageErrorEvent count: 5 (emitted by ['AgentExecutor'])
+--- messages added between call 1 and call 2 (what the model reads after its tool call), full dicts:
+[
+  {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+      {
+        "id": "call_1",
+        "type": "function",
+        "function": {
+          "name": "create_ticket",
+          "arguments": "{\"title\": \"CSV export times out\", \"priority\": \"high\"}"
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "tool_call_id": "call_1",
+    "name": "create_ticket",
+    "content": "Error executing tool: 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}"
+  }
+]
+--- outcome returned to the caller:
+{
+  "returned": false,
+  "exception_type": "crewai.tools.tool_failure.ToolExecutionFailedError",
+  "exception_message": "Tool 'create_ticket' failed during 'File a high-priority ticket: CSV export times out.': Agent 'Support agent' called 'create_ticket' with the same arguments 5 times and got the same result each time. Stopped because it is not making progress.",
+  "traceback_tail": [
+    "  File \"crewai/utilities/agent_utils.py\", line 1952, in check_repeated_tool_call",
+    "    raise ToolExecutionFailedError(",
+    "crewai.tools.tool_failure.ToolExecutionFailedError: Tool 'create_ticket' failed during 'File a high-priority ticket: CSV export times out.': Agent 'Support agent' called 'create_ticket' with the same arguments 5 times and got the same result each time. Stopped because it is not making progress."
+  ]
+}
+--- last LLM call: tools passed = ['create_ticket']
+--- last message in the last LLM call:
+{
+  "role": "tool",
+  "tool_call_id": "call_4",
+  "name": "create_ticket",
+  "content": "Error executing tool: 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}"
+}
+
+##########################################################################################
+# KNOB DEMOS BELOW: each changes one setting on purpose; they are not defaults
+##########################################################################################
+
+==========================================================================================
+SCENARIO K1 native + after_tool_call hook: tool raises
+==========================================================================================
+agent.max_iter=25 max_rpm=None max_execution_time=None max_retry_limit=2 max_tokens=None tool_failure_policy=None task.human_input=False tool.max_usage_count=None
+LLM calls made: 2
+tool body runs: 1 [{'title': 'CSV export times out', 'priority': 'high'}]
+ToolUsageErrorEvent count: 1 (emitted by ['AgentExecutor'])
+--- messages added between call 1 and call 2 (what the model reads after its tool call), full dicts:
+[
+  {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+      {
+        "id": "call_1",
+        "type": "function",
+        "function": {
+          "name": "create_ticket",
+          "arguments": "{\"title\": \"CSV export times out\", \"priority\": \"high\"}"
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "tool_call_id": "call_1",
+    "name": "create_ticket",
+    "content": "create_ticket failed: priority must be one of P0 (critical), P1 (high), P2 (normal). Retry with one of those codes."
+  }
+]
+--- outcome returned to the caller:
+{
+  "returned": true,
+  "raw": "TCK done",
+  "tool_failures": [
+    {
+      "tool": "create_ticket",
+      "reason": "exception",
+      "code": "ServerValidationError",
+      "message": "422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}"
+    }
+  ]
+}
+
+==========================================================================================
+SCENARIO K2 native + tool returns ToolFailure
+==========================================================================================
+agent.max_iter=25 max_rpm=None max_execution_time=None max_retry_limit=2 max_tokens=None tool_failure_policy=None task.human_input=False tool.max_usage_count=None
+LLM calls made: 2
+tool body runs: 1 [{'title': 'CSV export times out', 'priority': 'high'}]
+ToolUsageErrorEvent count: 0 (emitted by [])
+--- messages added between call 1 and call 2 (what the model reads after its tool call), full dicts:
+[
+  {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+      {
+        "id": "call_1",
+        "type": "function",
+        "function": {
+          "name": "create_ticket",
+          "arguments": "{\"title\": \"CSV export times out\", \"priority\": \"high\"}"
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "tool_call_id": "call_1",
+    "name": "create_ticket",
+    "content": "priority must be P0, P1 or P2 (code: enum)"
+  }
+]
+--- outcome returned to the caller:
+{
+  "returned": true,
+  "raw": "TCK done",
+  "tool_failures": [
+    {
+      "tool": "create_ticket",
+      "reason": "tool_reported",
+      "code": "enum",
+      "message": "priority must be P0, P1 or P2"
+    }
+  ]
+}
+
+==========================================================================================
+SCENARIO K3 native + before_tool_call hook returns False
+==========================================================================================
+agent.max_iter=25 max_rpm=None max_execution_time=None max_retry_limit=2 max_tokens=None tool_failure_policy=None task.human_input=False tool.max_usage_count=None
+LLM calls made: 2
+tool body runs: 0 []
+ToolUsageErrorEvent count: 0 (emitted by [])
+--- messages added between call 1 and call 2 (what the model reads after its tool call), full dicts:
+[
+  {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+      {
+        "id": "call_1",
+        "type": "function",
+        "function": {
+          "name": "create_ticket",
+          "arguments": "{\"title\": \"CSV export times out\", \"priority\": \"high\"}"
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "tool_call_id": "call_1",
+    "name": "create_ticket",
+    "content": "Tool execution blocked by hook. Tool: create_ticket"
+  }
+]
+--- outcome returned to the caller:
+{
+  "returned": true,
+  "raw": "TCK done",
+  "tool_failures": []
+}
+
+==========================================================================================
+network attempts blocked: 0 []

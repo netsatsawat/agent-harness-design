@@ -12,9 +12,12 @@ stayed the same, and only the code around the model changed.
 That code is the harness, and this repo is about designing it. You want an agent you can trust:
 one that does what the user asked, stays inside its limits, recovers when a call fails and
 leaves a record you can check. The harness code does most of that work, so if your team does
-not design the harness, your framework's defaults do.
+not design the harness, your framework's defaults do. The [framework
+checks](part1-loop-and-readback/framework-defaults/README.md) show how far those defaults differ.
+The same failed call stops the run in LangGraph, reaches the model as the raw exception in
+Strands, and becomes a fixed line in the OpenAI Agents SDK.
 
-This series splits the harness work into eight jobs, one part each. Every part names its
+This series splits the work into eight parts, one article each. Every part names its
 patterns and pairs each one with its anti-pattern, the thing teams or framework defaults often
 do instead. Every part also ships small runnable examples with tests. The patterns work with any
 model, because each check makes a failure happen on purpose and then reads the trace.
@@ -27,14 +30,14 @@ model, because each check makes a failure happen on purpose and then reads the t
 | Trace | The log of every model call and tool call in one run. |
 | Anti-pattern | What teams or framework defaults often do instead of the pattern, and how to spot it in a trace. |
 
-![The series map. The model sits in the middle. Six harness jobs surround it: loop and read-back, tools, context and memory, sub-agents and handoffs, recovery, and authority. Two team jobs sit outside the harness: evidence before release and ownership after launch. Job 1 is highlighted.](part1-loop-and-readback/figures/series-map-part1.png)
+![The series map: eight parts of agent design, one article each. The model sits in the middle. Six parts of the harness surround it: loop and read-back, tools, context and memory, sub-agents and handoffs, recovery, and authority. Two parts of team work sit outside the harness: evidence before release and ownership after launch. Part 1 is highlighted.](part1-loop-and-readback/figures/series-map-part1.png)
 
-*Six of the eight jobs live in the harness code. The other two are team jobs: evidence before
+*Six of the eight parts live in the harness code. The other two are team work: evidence before
 release and ownership after launch.*
 
 ## The eight parts
 
-| Part | Job | The question it answers | Status |
+| # | Part | The question it answers | Status |
 |---|---|---|---|
 | 1 | Loop and read-back | What does the model read back, and when does the run stop? | Available: [part1-loop-and-readback](part1-loop-and-readback) |
 | 2 | Tools | Which tools does the model get? | Coming |
@@ -42,13 +45,13 @@ release and ownership after launch.*
 | 4 | Sub-agents and handoffs | What must a sub-agent hand back? | Coming |
 | 5 | Recovery | Is it safe to retry a write? | Coming |
 | 6 | Authority | Where is each rule enforced? | Coming |
-| 7 | Evidence before release (team job) | What proves a change works? | Coming |
-| 8 | Ownership after launch (team job) | Who looks after the agent once it ships? | Coming |
+| 7 | Evidence before release (team work) | What proves a change works? | Coming |
+| 8 | Ownership after launch (team work) | Who looks after the agent once it ships? | Coming |
 
-One rule runs through all eight jobs. The model chooses what to try, code enforces the limits
+One rule runs through all eight parts. The model chooses what to try, code enforces the limits
 and rules, and your team decides what proves it works. The [Part 1
 README](part1-loop-and-readback/README.md#a-harness-design-review) lists the pattern and the
-anti-pattern for every job as a one-page design review.
+anti-pattern for every part as a one-page design review.
 
 ## Run Part 1
 
@@ -80,7 +83,8 @@ part1-loop-and-readback/
   examples/                       the six patterns as small code, one agent with all six, pytest tests
   experiment/                     the experiment behind the Part 1 numbers, its pinned dependencies, its results
   expected/                       what check_error_strings.py prints under each SDK version
-  figures/                        the five Part 1 figures and the scripts that draw them
+  framework-defaults/             the same failing tool in eight frameworks, every default left alone
+  figures/                        the six Part 1 figures and the scripts that draw them
 LICENSE                           MIT
 ```
 

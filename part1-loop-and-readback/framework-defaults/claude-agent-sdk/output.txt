@@ -1,0 +1,183 @@
+
+============================================================================================
+1. DEFAULTS: ClaudeAgentOptions() and the CLI argv the SDK builds from it (not run)
+============================================================================================
+claude_agent_sdk.__version__ = 0.2.174
+bundled Claude Code CLI      = 2.1.310
+mcp package                  = 2.3.0
+ClaudeAgentOptions().max_turns                    = None
+ClaudeAgentOptions().max_budget_usd               = None
+ClaudeAgentOptions().task_budget                  = None
+ClaudeAgentOptions().permission_mode              = None
+ClaudeAgentOptions().can_use_tool                 = None
+ClaudeAgentOptions().permission_prompt_tool_name  = None
+ClaudeAgentOptions().allowed_tools                = []
+ClaudeAgentOptions().hooks                        = None
+defaults (+ mcp_servers only)  : limit/approval flags passed to the CLI = none
+max_turns=5, max_budget_usd=1.0 : limit/approval flags passed to the CLI = {'--max-turns': '5', '--max-budget-usd': '1.0'}
+can_use_tool=<callback>         : limit/approval flags passed to the CLI = {'--permission-prompt-tool': 'stdio'}
+allowed_tools=[the tool]        : limit/approval flags passed to the CLI = {'--allowedTools': 'mcp__tickets__create_ticket'}
+
+============================================================================================
+2. IN-PROCESS MCP SERVER: raw JSON-RPC tools/call through the SDK's own SdkMcpBridge
+============================================================================================
+initialize ok: serverInfo={'name': 'tickets', 'version': '1.0.0'}
+tools/list inputSchema the model is given:
+{
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "priority"
+  ],
+  "type": "object"
+}
+
+--- A. server raises ServerValidationError (priority='high')
+arguments: {"title": "CSV export times out", "priority": "high"}
+raised to the caller: no (the bridge returned a JSON-RPC response)
+JSON-RPC response (verbatim):
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "content": [
+      {
+        "text": "422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}",
+        "type": "text"
+      }
+    ],
+    "isError": true
+  }
+}
+text == str(exception): True
+
+--- B. bad args vs the tool's own schema (priority=123)
+arguments: {"title": "CSV export times out", "priority": 123}
+raised to the caller: no (the bridge returned a JSON-RPC response)
+JSON-RPC response (verbatim):
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "result": {
+    "content": [
+      {
+        "text": "Input validation error: 123 is not of type 'string'",
+        "type": "text"
+      }
+    ],
+    "isError": true
+  }
+}
+
+--- C. bad args vs the tool's own schema (priority missing)
+arguments: {"title": "CSV export times out"}
+raised to the caller: no (the bridge returned a JSON-RPC response)
+JSON-RPC response (verbatim):
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "result": {
+    "content": [
+      {
+        "text": "Input validation error: 'priority' is a required property",
+        "type": "text"
+      }
+    ],
+    "isError": true
+  }
+}
+
+--- D. control: valid call (priority='P1')
+arguments: {"title": "CSV export times out", "priority": "P1"}
+raised to the caller: no (the bridge returned a JSON-RPC response)
+JSON-RPC response (verbatim):
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "result": {
+    "content": [
+      {
+        "text": "{\"id\": \"TCK-1042\", \"title\": \"CSV export times out\", \"priority\": \"P1\", \"status\": \"open\"}",
+        "type": "text"
+      }
+    ],
+    "isError": false
+  }
+}
+
+============================================================================================
+3. REAL query() LOOP, ALL DEFAULTS (only mcp_servers set), FAKE CLI ON THE TRANSPORT
+============================================================================================
+permission enforcement note: allowed_tools/permission_mode are enforced inside the CLI, which this
+script does not run. With every option at its default, the real CLI (2.1.310) starts in
+'default' mode with no approver, so it would deny this MCP call before the handler runs.
+This section shows what the model reads once the call is allowed to run.
+
+SDK initialize control request (what the SDK told the CLI):
+{
+  "subtype": "initialize",
+  "hooks": null
+}
+
+exception escaped query(): none
+
+CAPTURED: SDK control_response to the CLI's tools/call (real SDK output, verbatim):
+{
+  "subtype": "success",
+  "request_id": "cli_req_4",
+  "response": {
+    "mcp_response": {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "content": [
+          {
+            "text": "422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}",
+            "type": "text"
+          }
+        ],
+        "isError": true
+      }
+    }
+  }
+}
+
+TURN 2 MODEL INPUT: tool_result the CLI sends to the model (reconstructed from CLI 2.1.310 source):
+{
+  "role": "user",
+  "content": [
+    {
+      "type": "tool_result",
+      "content": "422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}",
+      "is_error": true,
+      "tool_use_id": "toolu_fake_01"
+    }
+  ]
+}
+
+messages your app saw from query():
+  AssistantMessage ToolUseBlock name=mcp__tickets__create_ticket input={"title": "CSV export times out", "priority": "high"}
+  UserMessage ToolResultBlock is_error=True content='422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be \'P0\', \'P1\' or \'P2\'", "input": "high", "ctx": {"expected": "\'P0\', \'P1\' or \'P2\'"}}]}'
+  AssistantMessage TextBlock text='(scripted turn 2 reply)'
+  ResultMessage subtype=success is_error=False
+
+============================================================================================
+5. TURN LIMIT BOUNDARY: CLI ends the run with error_max_turns, then exits 1
+============================================================================================
+default: ClaudeAgentOptions().max_turns = None -> no --max-turns flag -> no limit (docs: 'No limit').
+knob: max_turns=N -> --max-turns N. Below, the fake CLI ends the run the way the CLI does at the limit.
+yielded before the raise:
+  ResultMessage subtype=error_max_turns is_error=True result=None errors=['Reached maximum number of turns (3)'] terminal_reason=max_turns
+exception escaped query(): ResultError (subclass of ProcessError)
+  str(e)          = 'Claude Code returned an error result: Reached maximum number of turns (3) (exit code: 1)'
+  e.subtype       = 'error_max_turns'
+  e.errors        = ['Reached maximum number of turns (3)']
+  e.exit_code     = 1
+  e.terminal_reason = 'max_turns'

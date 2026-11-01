@@ -5,7 +5,7 @@
   "description": "Figure scripts for Part 1: each draws an SVG and renders it to PNG through sharp.",
   "license": "MIT",
   "scripts": {
-    "render": "node src/fig-hero-what-the-model-read.js && node src/fig-series-map.js 1 && node src/fig-same-model-different-harness.js && node src/fig-run-results.js && node src/fig-design-review.js"
+    "render": "node src/fig-hero-what-the-model-read.js && node src/fig-series-map.js 1 && node src/fig-same-model-different-harness.js && node src/fig-run-results.js && node src/fig-design-review.js && node src/fig-framework-defaults.js"
   },
   "dependencies": {
     "sharp": "0.34.5"

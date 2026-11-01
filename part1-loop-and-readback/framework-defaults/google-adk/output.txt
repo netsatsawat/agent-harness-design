@@ -1,0 +1,163 @@
+google-adk version: 2.13.0
+RunConfig().max_llm_calls default: 500
+LlmAgent.on_tool_error_callback default: None
+FunctionTool(create_ticket)._require_confirmation default: False
+FUNCTION_TOOL_ARG_VALIDATION enabled by default: False
+InMemoryRunner default plugins: []
+
+========================================================================================
+[1] DEFAULTS: tool raises ServerValidationError (priority='high')
+----------------------------------------------------------------------------------------
+model turns made: 1
+create_ticket body executions: 1
+run stopped with exception: __main__.ServerValidationError
+exception message: 422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be 'P0', 'P1' or 'P2'", "input": "high", "ctx": {"expected": "'P0', 'P1' or 'P2'"}}]}
+turn 2 never happened: the model received nothing after the failure
+
+========================================================================================
+[2] DEFAULTS: missing mandatory argument 'priority'
+----------------------------------------------------------------------------------------
+model turns made: 2
+create_ticket body executions: 0
+run ended normally (no exception reached the caller)
+what the model receives on turn 2 (last content of the request):
+{
+  "parts": [
+    {
+      "function_response": {
+        "name": "create_ticket",
+        "response": {
+          "error": "Invoking `create_ticket()` failed as the following mandatory input parameters are not present:\npriority\nYou could retry calling this tool, but it is IMPORTANT for you to provide all the mandatory parameters."
+        }
+      }
+    }
+  ],
+  "role": "user"
+}
+verbatim response dict: {'error': 'Invoking `create_ticket()` failed as the following mandatory input parameters are not present:\npriority\nYou could retry calling this tool, but it is IMPORTANT for you to provide all the mandatory parameters.'}
+
+========================================================================================
+[3] DEFAULTS: wrong argument type priority=123
+----------------------------------------------------------------------------------------
+model turns made: 1
+create_ticket body executions: 1
+run stopped with exception: __main__.ServerValidationError
+exception message: 422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be 'P0', 'P1' or 'P2'", "input": 123, "ctx": {"expected": "'P0', 'P1' or 'P2'"}}]}
+turn 2 never happened: the model received nothing after the failure
+
+========================================================================================
+[4] OPT-IN ADK_ENABLE_FUNCTION_TOOL_ARG_VALIDATION: priority=123
+----------------------------------------------------------------------------------------
+model turns made: 2
+create_ticket body executions: 0
+run ended normally (no exception reached the caller)
+what the model receives on turn 2 (last content of the request):
+{
+  "parts": [
+    {
+      "function_response": {
+        "name": "create_ticket",
+        "response": {
+          "error": "Invoking `create_ticket()` failed due to argument validation errors:\nParameter 'priority': expected type 'str', validation error: 1 validation error for str\n  Input should be a valid string [type=string_type, input_value=123, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.14/v/string_type\nYou could retry calling this tool with corrected argument types."
+        }
+      }
+    }
+  ],
+  "role": "user"
+}
+verbatim response dict: {'error': "Invoking `create_ticket()` failed due to argument validation errors:\nParameter 'priority': expected type 'str', validation error: 1 validation error for str\n  Input should be a valid string [type=string_type, input_value=123, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.14/v/string_type\nYou could retry calling this tool with corrected argument types."}
+
+========================================================================================
+[5] KNOB LlmAgent(on_tool_error_callback=team_note), priority='high'
+----------------------------------------------------------------------------------------
+model turns made: 2
+create_ticket body executions: 1
+run ended normally (no exception reached the caller)
+what the model receives on turn 2 (last content of the request):
+{
+  "parts": [
+    {
+      "function_response": {
+        "name": "create_ticket",
+        "response": {
+          "error": "create_ticket failed: 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}"
+        }
+      }
+    }
+  ],
+  "role": "user"
+}
+verbatim response dict: {'error': 'create_ticket failed: 422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be \'P0\', \'P1\' or \'P2\'", "input": "high", "ctx": {"expected": "\'P0\', \'P1\' or \'P2\'"}}]}'}
+
+========================================================================================
+[6] KNOB plugin on_tool_error_callback (runner-wide), priority='high'
+----------------------------------------------------------------------------------------
+model turns made: 2
+create_ticket body executions: 1
+run ended normally (no exception reached the caller)
+what the model receives on turn 2 (last content of the request):
+{
+  "parts": [
+    {
+      "function_response": {
+        "name": "create_ticket",
+        "response": {
+          "error": "create_ticket failed: 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}"
+        }
+      }
+    }
+  ],
+  "role": "user"
+}
+verbatim response dict: {'error': 'create_ticket failed: 422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be \'P0\', \'P1\' or \'P2\'", "input": "high", "ctx": {"expected": "\'P0\', \'P1\' or \'P2\'"}}]}'}
+
+========================================================================================
+[7] OPT-IN ReflectAndRetryToolPlugin() defaults, same bad call every turn
+----------------------------------------------------------------------------------------
+model turns made: 4
+create_ticket body executions: 4
+run stopped with exception: builtins.RuntimeError
+exception message: Error in plugin 'reflect_retry_tool_plugin' during 'on_tool_error_callback' callback: 422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be 'P0', 'P1' or 'P2'", "input": "high", "ctx": {"expected": "'P0', 'P1' or 'P2'"}}]}
+what the model receives on turn 2 (last content of the request):
+{
+  "parts": [
+    {
+      "function_response": {
+        "name": "create_ticket",
+        "response": {
+          "response_type": "ERROR_HANDLED_BY_REFLECT_AND_RETRY_PLUGIN",
+          "error_type": "ServerValidationError",
+          "error_details": "422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}",
+          "retry_count": 1,
+          "reflection_guidance": "The call to tool `create_ticket` failed.\n\n**Error Details:**\n```\nServerValidationError: 422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be 'P0', 'P1' or 'P2'\", \"input\": \"high\", \"ctx\": {\"expected\": \"'P0', 'P1' or 'P2'\"}}]}\n```\n\n**Tool Arguments Used:**\n```json\n{\n  \"title\": \"CSV export times out\",\n  \"priority\": \"high\"\n}\n```\n\n**Reflection Guidance:**\nThis is retry attempt **1 of 3**. Analyze the error and the arguments you provided. Do not repeat the exact same call. Consider the following before your next attempt:\n\n1.  **Invalid Parameters**: Does the error suggest that one or more arguments are incorrect, badly formatted, or missing? Review the tool's schema and your arguments.\n2.  **State or Preconditions**: Did a previous step fail or not produce the necessary state/resource for this tool to succeed?\n3.  **Alternative Approach**: Is this the right tool for the job? Could another tool or a different sequence of steps achieve the goal?\n4.  **Simplify the Task**: Can you break the problem down into smaller, simpler steps?\n5.  **Wrong Function Name**: Does the error indicates the tool is not found? Please check again and only use available tools.\n\nFormulate a new plan based on your analysis and try a corrected or different approach."
+        }
+      }
+    }
+  ],
+  "role": "user"
+}
+verbatim response dict: {'response_type': 'ERROR_HANDLED_BY_REFLECT_AND_RETRY_PLUGIN', 'error_type': 'ServerValidationError', 'error_details': '422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be \'P0\', \'P1\' or \'P2\'", "input": "high", "ctx": {"expected": "\'P0\', \'P1\' or \'P2\'"}}]}', 'retry_count': 1, 'reflection_guidance': 'The call to tool `create_ticket` failed.\n\n**Error Details:**\n```\nServerValidationError: 422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be \'P0\', \'P1\' or \'P2\'", "input": "high", "ctx": {"expected": "\'P0\', \'P1\' or \'P2\'"}}]}\n```\n\n**Tool Arguments Used:**\n```json\n{\n  "title": "CSV export times out",\n  "priority": "high"\n}\n```\n\n**Reflection Guidance:**\nThis is retry attempt **1 of 3**. Analyze the error and the arguments you provided. Do not repeat the exact same call. Consider the following before your next attempt:\n\n1.  **Invalid Parameters**: Does the error suggest that one or more arguments are incorrect, badly formatted, or missing? Review the tool\'s schema and your arguments.\n2.  **State or Preconditions**: Did a previous step fail or not produce the necessary state/resource for this tool to succeed?\n3.  **Alternative Approach**: Is this the right tool for the job? Could another tool or a different sequence of steps achieve the goal?\n4.  **Simplify the Task**: Can you break the problem down into smaller, simpler steps?\n5.  **Wrong Function Name**: Does the error indicates the tool is not found? Please check again and only use available tools.\n\nFormulate a new plan based on your analysis and try a corrected or different approach.'}
+
+========================================================================================
+[8] OPT-IN FunctionTool(create_ticket, require_confirmation=True), valid call
+----------------------------------------------------------------------------------------
+model turns made: 1
+create_ticket body executions: 0
+run ended normally (no exception reached the caller)
+
+  event author=support function_call name=create_ticket args={"title": "CSV export times out", "priority": "P1"}
+  event author=support function_call name=adk_request_confirmation args={"originalFunctionCall": {"id": "adk-2a94f5a3-e291-4c15-b799-873c47b9c57b", "args": {"title": "CSV export times out", "priority": "P1"}, "name": "create_ticket"}, "toolConfirmation": {"hint": "Please approve or reject the tool call create_ticket() by responding with a FunctionResponse with an expect
+  event author=support function_response name=create_ticket response={'error': 'This tool call requires confirmation, please approve or reject.'}
+
+========================================================================================
+[9] DEFAULTS: model calls a working tool forever (no run_config passed)
+----------------------------------------------------------------------------------------
+model turns made: 500
+create_ticket body executions: 0
+run stopped with exception: google.adk.agents.invocation_context.LlmCallsLimitExceededError
+exception message: Max number of llm calls limit of `500` exceeded
+
+  events yielded before the stop: 1001
+  exception is LlmCallsLimitExceededError: True
+
+outbound network connect attempts during the whole run: 0

@@ -1,0 +1,14 @@
+python pydantic_ai 2.61.0
+ToolFailed importable from pydantic_ai: pydantic_ai.exceptions.ToolFailed
+
+=== R1 the 422 every call, tool raises ModelRetry(str(e)), default retries
+    run outcome: EXCEPTION propagated to caller
+    exception type: pydantic_ai.exceptions.UnexpectedModelBehavior
+    exception str : Tool 'create_ticket' exceeded max retries count of 1. Consider raising the retry limit, or see the docs on tool retries: https://pydantic.dev/docs/ai/tools-toolsets/tools-advanced/#tool-retries
+    model calls made: 2   tool executions: 2
+
+=== R2 the 422 every call, tool raises ToolFailed(str(e)), default UsageLimits
+    run outcome: EXCEPTION propagated to caller
+    exception type: pydantic_ai.exceptions.UsageLimitExceeded
+    exception str : The next request would exceed the request_limit of 50. Consider raising the limit, or see the docs on usage limits for budget-aware patterns: https://pydantic.dev/docs/ai/core-concepts/agent/#usage-limits
+    model calls made: 50   tool executions: 50

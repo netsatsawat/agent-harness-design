@@ -1,0 +1,152 @@
+langchain==1.4.7
+langchain-core==1.7.0
+langgraph==1.2.18
+langgraph-prebuilt==1.1.1
+langgraph DEFAULT_RECURSION_LIMIT = 10007  (langchain_core's own constant, not used by langgraph: 25)
+
+##### DEFAULTS UNTOUCHED #####
+
+=== F1 tool raises ServerValidationError (priority='high')  [create_agent]
+    turn 1 tool call: create_ticket({"title": "CSV export times out", "priority": "high"})
+    run outcome: EXCEPTION propagated to caller
+    exception type: __main__.ServerValidationError
+    exception str : 422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be 'P0', 'P1' or 'P2'", "input": "high", "ctx": {"expected": "'P0', 'P1' or 'P2'"}}]}
+    tool function executions: 1
+    model calls made: 1
+    turn 2: NEVER HAPPENED (the model was not called again)
+
+=== F1 tool raises ServerValidationError (priority='high')  [create_react_agent]
+    [warning at build] LangGraphDeprecatedSinceV10: create_react_agent has been moved to `langchain.agents`. Please update your import to `from langchain.agents import create_agent`. Deprecated in LangGraph V1.0 to be removed in V2.0.
+    turn 1 tool call: create_ticket({"title": "CSV export times out", "priority": "high"})
+    run outcome: EXCEPTION propagated to caller
+    exception type: __main__.ServerValidationError
+    exception str : 422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be 'P0', 'P1' or 'P2'", "input": "high", "ctx": {"expected": "'P0', 'P1' or 'P2'"}}]}
+    tool function executions: 1
+    model calls made: 1
+    turn 2: NEVER HAPPENED (the model was not called again)
+
+=== F1b bad args: priority=123 (fails the tool's own schema)  [create_agent]
+    turn 1 tool call: create_ticket({"title": "CSV export times out", "priority": 123})
+    run outcome: RETURNED to caller (no exception)
+    final message: 'Ticket handled.'
+    tool function executions: 0
+    model calls made: 2
+    turn 2: model received this tool-result message:
+      {"class": "ToolMessage", "type(role)": "tool", "content": "Error invoking tool 'create_ticket' with kwargs {'title': 'CSV export times out', 'priority': 123} with error:\n priority: Input should be a valid string\n Please fix the error and try again.", "status": "error", "name": "create_ticket", "tool_call_id": "call_1"}
+      content, printed raw:
+        | Error invoking tool 'create_ticket' with kwargs {'title': 'CSV export times out', 'priority': 123} with error:
+        |  priority: Input should be a valid string
+        |  Please fix the error and try again.
+
+=== F1b bad args: priority missing  [create_agent]
+    turn 1 tool call: create_ticket({"title": "CSV export times out"})
+    run outcome: RETURNED to caller (no exception)
+    final message: 'Ticket handled.'
+    tool function executions: 0
+    model calls made: 2
+    turn 2: model received this tool-result message:
+      {"class": "ToolMessage", "type(role)": "tool", "content": "Error invoking tool 'create_ticket' with kwargs {'title': 'CSV export times out'} with error:\n priority: Field required\n Please fix the error and try again.", "status": "error", "name": "create_ticket", "tool_call_id": "call_1"}
+      content, printed raw:
+        | Error invoking tool 'create_ticket' with kwargs {'title': 'CSV export times out'} with error:
+        |  priority: Field required
+        |  Please fix the error and try again.
+
+=== F1b bad args: priority=123 (fails the tool's own schema)  [create_react_agent]
+    [warning at build] LangGraphDeprecatedSinceV10: create_react_agent has been moved to `langchain.agents`. Please update your import to `from langchain.agents import create_agent`. Deprecated in LangGraph V1.0 to be removed in V2.0.
+    turn 1 tool call: create_ticket({"title": "CSV export times out", "priority": 123})
+    run outcome: RETURNED to caller (no exception)
+    final message: 'Ticket handled.'
+    tool function executions: 0
+    model calls made: 2
+    turn 2: model received this tool-result message:
+      {"class": "ToolMessage", "type(role)": "tool", "content": "Error invoking tool 'create_ticket' with kwargs {'title': 'CSV export times out', 'priority': 123} with error:\n priority: Input should be a valid string\n Please fix the error and try again.", "status": "error", "name": "create_ticket", "tool_call_id": "call_1"}
+      content, printed raw:
+        | Error invoking tool 'create_ticket' with kwargs {'title': 'CSV export times out', 'priority': 123} with error:
+        |  priority: Input should be a valid string
+        |  Please fix the error and try again.
+
+=== F1b bad args: priority missing  [create_react_agent]
+    [warning at build] LangGraphDeprecatedSinceV10: create_react_agent has been moved to `langchain.agents`. Please update your import to `from langchain.agents import create_agent`. Deprecated in LangGraph V1.0 to be removed in V2.0.
+    turn 1 tool call: create_ticket({"title": "CSV export times out"})
+    run outcome: RETURNED to caller (no exception)
+    final message: 'Ticket handled.'
+    tool function executions: 0
+    model calls made: 2
+    turn 2: model received this tool-result message:
+      {"class": "ToolMessage", "type(role)": "tool", "content": "Error invoking tool 'create_ticket' with kwargs {'title': 'CSV export times out'} with error:\n priority: Field required\n Please fix the error and try again.", "status": "error", "name": "create_ticket", "tool_call_id": "call_1"}
+      content, printed raw:
+        | Error invoking tool 'create_ticket' with kwargs {'title': 'CSV export times out'} with error:
+        |  priority: Field required
+        |  Please fix the error and try again.
+
+    (default loop limit is run by: python -I check_langgraph_defaults.py --full-default-loop)
+    [create_agent] recursion_limit carried on the compiled graph: 9999 -> falls back to langgraph DEFAULT_RECURSION_LIMIT when None
+
+    (default loop limit is run by: python -I check_langgraph_defaults.py --full-default-loop)
+    [warning at build] LangGraphDeprecatedSinceV10: create_react_agent has been moved to `langchain.agents`. Please update your import to `from langchain.agents import create_agent`. Deprecated in LangGraph V1.0 to be removed in V2.0.
+    [create_react_agent] recursion_limit carried on the compiled graph: None -> falls back to langgraph DEFAULT_RECURSION_LIMIT when None
+
+##### NON-DEFAULT limit, F3 only: same loop, small limits so it ends fast #####
+    (an odd and an even limit: create_react_agent's 'need more steps' stop depends on it;
+     the shipped defaults are 9_999 for create_agent and 10_007 for create_react_agent)
+
+=== F3 turn limit: model calls ping() forever, NON-DEFAULT recursion_limit=11  [create_agent]
+    recursion_limit carried on the compiled graph: 9999
+    run outcome: EXCEPTION propagated to caller
+    exception type: langgraph.errors.GraphRecursionError
+    exception str : Recursion limit of 11 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT
+    model calls made: 6   ping executions: 5
+
+=== F3 turn limit: model calls ping() forever, NON-DEFAULT recursion_limit=11  [create_react_agent]
+    [warning at build] LangGraphDeprecatedSinceV10: create_react_agent has been moved to `langchain.agents`. Please update your import to `from langchain.agents import create_agent`. Deprecated in LangGraph V1.0 to be removed in V2.0.
+    recursion_limit carried on the compiled graph: None
+    run outcome: EXCEPTION propagated to caller
+    exception type: langgraph.errors.GraphRecursionError
+    exception str : Recursion limit of 11 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT
+    model calls made: 6   ping executions: 5
+
+=== F3 turn limit: model calls ping() forever, NON-DEFAULT recursion_limit=12  [create_agent]
+    recursion_limit carried on the compiled graph: 9999
+    run outcome: EXCEPTION propagated to caller
+    exception type: langgraph.errors.GraphRecursionError
+    exception str : Recursion limit of 12 reached without hitting a stop condition. You can increase the limit by setting the `recursion_limit` config key.
+For troubleshooting, visit: https://docs.langchain.com/oss/python/langgraph/errors/GRAPH_RECURSION_LIMIT
+    model calls made: 6   ping executions: 6
+
+=== F3 turn limit: model calls ping() forever, NON-DEFAULT recursion_limit=12  [create_react_agent]
+    [warning at build] LangGraphDeprecatedSinceV10: create_react_agent has been moved to `langchain.agents`. Please update your import to `from langchain.agents import create_agent`. Deprecated in LangGraph V1.0 to be removed in V2.0.
+    recursion_limit carried on the compiled graph: None
+    run outcome: RETURNED to caller (no exception)
+    final message: AIMessage 'Sorry, need more steps to process this request.'
+    final message has tool_calls: False
+    model calls made: 6   ping executions: 5
+
+##### NON-DEFAULT, for F2 only: the knobs that replace the text #####
+
+=== F2 knob: create_agent(middleware=[ToolErrorMiddleware(on_error=...)])  [create_agent]
+    turn 1 tool call: create_ticket({"title": "CSV export times out", "priority": "high"})
+    run outcome: RETURNED to caller (no exception)
+    final message: 'Ticket handled.'
+    tool function executions: 1
+    model calls made: 2
+    turn 2: model received this tool-result message:
+      {"class": "ToolMessage", "type(role)": "tool", "content": "create_ticket failed: priority must be one of P0 (critical), P1 (high), P2 (normal). Map the user's word to a code and call again.", "status": "error", "name": "create_ticket", "tool_call_id": "call_1"}
+      content, printed raw:
+        | create_ticket failed: priority must be one of P0 (critical), P1 (high), P2 (normal). Map the user's word to a code and call again.
+
+    (create_react_agent accepts a pre-built ToolNode in place of the tools list)
+
+=== F2 knob: create_react_agent(ToolNode([create_ticket], handle_tool_errors=team_note_toolnode))
+    turn 2: model received {"class": "ToolMessage", "type(role)": "tool", "content": "create_ticket failed: priority must be one of P0 (critical), P1 (high), P2 (normal). Map the user's word to a code and call again.", "status": "error", "name": "create_ticket", "tool_call_id": "call_1"}
+      content, printed raw:
+        | create_ticket failed: priority must be one of P0 (critical), P1 (high), P2 (normal). Map the user's word to a code and call again.
+
+=== F2 knob: create_react_agent(ToolNode([create_ticket], handle_tool_errors=True))
+    turn 2: model received {"class": "ToolMessage", "type(role)": "tool", "content": "Error: ServerValidationError('422 Unprocessable Entity: {\"detail\": [{\"type\": \"enum\", \"loc\": [\"body\", \"priority\"], \"msg\": \"Input should be \\'P0\\', \\'P1\\' or \\'P2\\'\", \"input\": \"high\", \"ctx\": {\"expected\": \"\\'P0\\', \\'P1\\' or \\'P2\\'\"}}]}')\n Please fix your mistakes.", "status": "error", "name": "create_ticket", "tool_call_id": "call_1"}
+      content, printed raw:
+        | Error: ServerValidationError('422 Unprocessable Entity: {"detail": [{"type": "enum", "loc": ["body", "priority"], "msg": "Input should be \'P0\', \'P1\' or \'P2\'", "input": "high", "ctx": {"expected": "\'P0\', \'P1\' or \'P2\'"}}]}')
+        |  Please fix your mistakes.
+
+socket connects attempted (all blocked): 0 []
